@@ -112,12 +112,20 @@ def build_sections(w: Warehouse, fy: FiscalYear) -> list[tuple[str, str]]:
 
 
 CSS = """
-body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#0b0b0b;background:#fcfcfb;max-width:760px;margin:2rem auto;padding:0 16px;line-height:1.5}
-h1{font-size:1.5rem;margin-bottom:.25rem} h2{font-size:1.1rem;margin-top:2rem;border-bottom:1px solid #e4e3df;padding-bottom:.25rem}
-.sub{color:#52514e;margin-top:0} table{border-collapse:collapse;width:100%;margin:.75rem 0;font-variant-numeric:tabular-nums}
-th,td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid #eeede9} th{color:#52514e;font-weight:600}
-td:not(:first-child),th:not(:first-child){text-align:right} .chart svg{max-width:100%;height:auto}
-@media print{body{margin:0}}
+:root{--paper:#fdfdf9;--sand:#f3e6d7;--tan:#e1c7a5;--teal:#6aa6aa;--deep:#2c5e63;--ink:#1f3436;--ink2:#4f5d5c}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--paper);max-width:760px;
+  margin:3rem auto;padding:0 20px;line-height:1.75;font-size:16px}
+h1{font-size:1.65rem;color:var(--deep);margin:0 0 .5rem;line-height:1.3}
+h2{font-size:1.15rem;color:var(--deep);margin:3rem 0 1rem;padding-bottom:.5rem;border-bottom:2px solid var(--sand)}
+p{margin:.75rem 0 1rem} ul{padding-left:1.25rem} li{margin-bottom:.6rem}
+.sub{color:var(--ink2);margin:0 0 2rem}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0 1.5rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--sand)}
+th{color:var(--ink2);font-weight:600;background:var(--sand)}
+td:not(:first-child),th:not(:first-child){text-align:right}
+.chart{margin:1.5rem 0} .chart svg{max-width:100%;height:auto}
+strong{color:var(--deep)}
+@media print{body{margin:0;max-width:none}}
 """
 
 
