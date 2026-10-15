@@ -1,0 +1,31 @@
+{
+  "Admitted without an intake date": [
+    "NS-0004",
+    "NS-0095",
+    "NS-0100"
+  ],
+  "Intake before referral": [
+    "NS-0083",
+    "NS-0148"
+  ],
+  "Left the house but no discharge date": [
+    "NS-0101",
+    "NS-0102"
+  ],
+  "No discharge reason": [
+    "NS-0006",
+    "NS-0074"
+  ],
+  "6-month follow-up due but blank": [
+    "NS-0036",
+    "NS-0051"
+  ],
+  "Fee marked waived but an amount is recorded": [
+    "NS-0007"
+  ],
+  "PHI-like note": [
+    "NS-0014",
+    "NS-0073",
+    "NS-0129"
+  ]
+}

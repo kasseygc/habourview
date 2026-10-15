@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+
+# Built artefacts: regenerate with `uv run axon build`
+data/warehouse/
+data/audit/
+data/definitions/
+out/
+.claude/
