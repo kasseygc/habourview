@@ -1,0 +1,295 @@
+{
+  "model": "claude-opus-5-5",
+  "mode": "replay",
+  "cases": 65,
+  "systems": {
+    "rules": {
+      "file": {
+        "overall": {
+          "tp": 45,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "referral": {
+          "tp": 12,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "discharge": {
+          "tp": 13,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "risk": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "engagement": {
+          "tp": 17,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "varied": {
+        "overall": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 16,
+          "precision": 1.0,
+          "recall": 0.15789473684210525,
+          "f1": 0.2727272727272727
+        },
+        "referral": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 5,
+          "precision": 1.0,
+          "recall": 0.16666666666666666,
+          "f1": 0.2857142857142857
+        },
+        "discharge": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 3,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "risk": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 3,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "engagement": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 5,
+          "precision": 1.0,
+          "recall": 0.2857142857142857,
+          "f1": 0.4444444444444445
+        }
+      },
+      "all": {
+        "overall": {
+          "tp": 48,
+          "fp": 0,
+          "fn": 16,
+          "precision": 1.0,
+          "recall": 0.75,
+          "f1": 0.8571428571428571
+        },
+        "referral": {
+          "tp": 13,
+          "fp": 0,
+          "fn": 5,
+          "precision": 1.0,
+          "recall": 0.7222222222222222,
+          "f1": 0.8387096774193548
+        },
+        "discharge": {
+          "tp": 13,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.8125,
+          "f1": 0.896551724137931
+        },
+        "risk": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "engagement": {
+          "tp": 19,
+          "fp": 0,
+          "fn": 5,
+          "precision": 1.0,
+          "recall": 0.7916666666666666,
+          "f1": 0.8837209302325582
+        }
+      }
+    }
+  },
+  "rejected_quotes": 0,
+  "rejected_examples": [],
+  "misses": {
+    "rules": [
+      {
+        "note": "Chose a day program near work instead.",
+        "missed": [
+          [
+            "referral",
+            "declined"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Intake booked for next Tuesday.",
+        "missed": [
+          [
+            "referral",
+            "pending_intake"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "No bed yet - next in line when one frees up.",
+        "missed": [
+          [
+            "referral",
+            "waitlisted"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Needs medical clearance first, sent to withdrawal mgmt.",
+        "missed": [
+          [
+            "referral",
+            "referred_out"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Didn't turn up for assessment, court notified.",
+        "missed": [
+          [
+            "referral",
+            "no_show"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Tearful in group, says she feels hopeless lately. Booked w/ counsellor.",
+        "missed": [
+          [
+            "risk",
+            "low_mood"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Reports strong urges to use after family visit.",
+        "missed": [
+          [
+            "risk",
+            "cravings"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Went to 2 NA and 1 AA mtg this wk, now has a sponsor.",
+        "missed": [
+          [
+            "engagement",
+            "attending_groups"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Started part-time work at a grocery store.",
+        "missed": [
+          [
+            "engagement",
+            "work"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Altercation in the kitchen, staff stepped in, no injuries.",
+        "missed": [
+          [
+            "risk",
+            "incident"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Walked out Sunday morning without telling staff.",
+        "missed": [
+          [
+            "discharge",
+            "self_discharge"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Sent to ER, admitted to the medical ward.",
+        "missed": [
+          [
+            "discharge",
+            "transfer_hospital"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Picked up by police on an old warrant.",
+        "missed": [
+          [
+            "discharge",
+            "incarceration"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Hasn't come to aftercare in a month, not returning calls.",
+        "missed": [
+          [
+            "engagement",
+            "aftercare_missed"
+          ],
+          [
+            "engagement",
+            "no_recent_contact"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Spoke at the alumni dinner, doing great.",
+        "missed": [
+          [
+            "engagement",
+            "doing_well"
+          ]
+        ],
+        "extra": []
+      }
+    ]
+  }
+}

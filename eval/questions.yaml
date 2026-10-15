@@ -111,6 +111,17 @@
   kind: answer
   spec: {metric: residents_now, group_by: [current_status], chart: bar}
 
+- id: n01
+  category: notes
+  question: Of the referrals we didn't admit, how many are still open according to the staff notes?
+  kind: answer
+  spec: {metric: referrals_by_note, group_by: [note_referral_state], chart: bar}
+- id: n02
+  category: notes
+  question: Why didn't referrals in 2025 end up being admitted?
+  kind: answer
+  spec: {metric: referrals_by_note, group_by: [note_referral], time_window: {preset: fy2025}, chart: bar}
+
 - id: q01
   category: clarify
   question: What percentage of residents were sober at 6 months?

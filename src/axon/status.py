@@ -32,14 +32,24 @@ class Flag:
     action: str | None = None
 
 
-def board(w: Warehouse) -> list[Flag]:
+def board(w: Warehouse, decisions: dict[str, str] | None = None) -> list[Flag]:
+    """decisions: staff confirmations of note findings (see axon.notes.review)."""
+    decisions = decisions or {}
     r, f, census = w.residents, w.followups, w.nightly_census
     as_of = pd.Timestamp(w.as_of)
     cap = w.capacity
     in_house = int(r["in_residence"].sum())
     open_beds = cap - in_house
 
-    waiting = r[~r["matured"] & (r["stage"] == "referred")]
+    not_yet = r[~r["matured"] & (r["stage"] == "referred")]
+    # The recorded fields can't tell a pending referral from a closed one; the notes can (D-25).
+    # Closures confirmed by staff leave the count; unconfirmed ones are shown beside it.
+    closed_by_note = not_yet["note_referral_state"].eq("closed")
+    confirmed = not_yet.apply(
+        lambda x: decisions.get(f"{x.resident_id}|referral|{x.note_referral}") == "confirm", axis=1
+    ) if len(not_yet) else pd.Series(dtype=bool)
+    waiting = not_yet[~(closed_by_note & confirmed)]
+    unconfirmed_closed = int((closed_by_note & ~confirmed).sum())
     days_waiting = (as_of - waiting["referral_date"]).dt.days
     usual = summarize(r.loc[r["matured"], "days_referral_to_intake"]).p90 or 0
     long_waits = int((days_waiting > usual).sum())
@@ -63,7 +73,10 @@ def board(w: Warehouse) -> list[Flag]:
                     f"{open_beds} beds open")
     flags.append(beds)
 
-    if long_waits:
+    if unconfirmed_closed:
+        flags.append(Flag("waiting", "Waiting for intake", str(len(waiting)), "amber", "Check notes",
+                          f"notes say {unconfirmed_closed} of these closed", "Confirm in Staff notes"))
+    elif long_waits:
         flags.append(Flag("waiting", "Waiting for intake", str(len(waiting)), "amber", "Waiting long",
                           f"{long_waits} waiting longer than usual ({usual:.0f}+ days)", "Follow up on the oldest referrals"))
     else:
@@ -80,6 +93,15 @@ def board(w: Warehouse) -> list[Flag]:
     else:
         flags.append(Flag("missing", "Outcomes not recorded", "0", "green", "Up to date", "every due result entered"))
 
+    queue = review_queue(w, decisions)
+    in_house = set(r.loc[r["in_residence"] | (r["current_status"] == "aftercare"), "resident_id"])
+    risk = queue[(queue["field"] == "risk") & queue["resident_id"].isin(in_house)]
+    if len(queue):
+        flags.append(Flag("notes", "Notes to review", str(len(queue)), "amber", "Needs review",
+                          f"{len(risk)} wellbeing or risk flags for current residents", "Open Staff notes"))
+    else:
+        flags.append(Flag("notes", "Notes to review", "0", "green", "Up to date", "every finding reviewed"))
+
     n_res = issues.loc[issues["resident_id"] != "(house)", "resident_id"].nunique()
     if len(issues):
         detail = f"{len(issues)} issues across {n_res} records"
@@ -90,3 +112,18 @@ def board(w: Warehouse) -> list[Flag]:
     else:
         flags.append(Flag("data", "Records to fix", "0", "green", "Clean", "no rule broken"))
     return flags
+
+
+def review_queue(w: Warehouse, decisions: dict[str, str] | None = None) -> pd.DataFrame:
+    """Findings that need a person: every risk flag, and referral or discharge findings not agreed by
+    both rules and model. Engagement is low-stakes and only queued when the model didn't confirm it."""
+    decisions = decisions or {}
+    f = w.note_findings
+    if f.empty:
+        return f
+    needs = f["review"].isin(["needs_review", "rules_only"]) & ~((f["field"] == "engagement") & (f["review"] == "rules_only"))
+    q = f[needs].copy()
+    q["key"] = q["resident_id"] + "|" + q["field"] + "|" + q["value"]
+    q = q[~q["key"].isin(decisions)]
+    order = {"risk": 0, "referral": 1, "discharge": 2, "engagement": 3}
+    return q.sort_values(by=["field", "resident_id"], key=lambda c: c.map(order) if c.name == "field" else c)

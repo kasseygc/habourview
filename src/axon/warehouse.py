@@ -11,12 +11,14 @@ import duckdb
 import pandas as pd
 
 from axon.config import AS_OF, WAREHOUSE_DIR, maturity_cutoff
+from axon.agent.llm import SpecModel
 from axon.ingest import read_residents
 from axon.model import build_model
+from axon.notes.extract import run_notes
 from axon.quality import check
 from axon.tenants import TENANTS, Tenant
 
-# The only tables the agent may query. dq_issues and meta are for the dashboard.
+# The only tables the agent may query. dq_issues, note_findings (redacted quotes) and meta are director-only.
 AGENT_TABLES = ("residents", "followups", "nightly_census")
 
 
@@ -26,6 +28,7 @@ class Warehouse:
     followups: pd.DataFrame
     nightly_census: pd.DataFrame
     dq_issues: pd.DataFrame
+    note_findings: pd.DataFrame
     meta: dict
 
     @property
@@ -37,10 +40,13 @@ class Warehouse:
         return pd.Timestamp(self.meta["as_of"]).date()
 
 
-def build_tenant(tenant: Tenant, as_of: date = AS_OF) -> dict:
+def build_tenant(tenant: Tenant, as_of: date = AS_OF, llm: SpecModel | None = None) -> dict:
     raw = read_residents(tenant.csv_path)
     model = build_model(raw, as_of)
     issues = check(raw, model, as_of)
+    # Staff notes are read in their own step; only structured fields join the analytics tables.
+    notes = run_notes(raw, llm if llm is not None else SpecModel())
+    residents = model.residents.merge(notes.per_resident, on="resident_id", how="left")
     meta = {
         "tenant_id": tenant.id,
         "tenant_name": tenant.name,
@@ -50,6 +56,9 @@ def build_tenant(tenant: Tenant, as_of: date = AS_OF) -> dict:
         "estimated_stay_days": model.estimated_stay_days,
         "source_sha256": hashlib.sha256(tenant.csv_path.read_bytes()).hexdigest(),
         "built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "notes_model_ran": notes.model_ran,
+        "notes_model_calls": notes.model_calls,
+        "notes_quotes_rejected": len(notes.rejected),
     }
 
     WAREHOUSE_DIR.mkdir(parents=True, exist_ok=True)
@@ -58,7 +67,8 @@ def build_tenant(tenant: Tenant, as_of: date = AS_OF) -> dict:
     con = duckdb.connect(str(tmp))
     try:
         for name, frame in [
-            ("residents", model.residents),
+            ("residents", residents),
+            ("note_findings", notes.findings),
             ("followups", model.followups),
             ("nightly_census", model.nightly_census),
             ("dq_issues", issues),
@@ -82,7 +92,8 @@ def load(tenant: Tenant) -> Warehouse:
         build_tenant(tenant)
     con = duckdb.connect(str(tenant.warehouse_path), read_only=True)
     try:
-        frames = {name: con.execute(f"SELECT * FROM {name}").df() for name in (*AGENT_TABLES, "dq_issues", "meta")}
+        frames = {name: con.execute(f"SELECT * FROM {name}").df()
+                  for name in (*AGENT_TABLES, "dq_issues", "note_findings", "meta")}
     finally:
         con.close()
     return Warehouse(
@@ -90,6 +101,7 @@ def load(tenant: Tenant) -> Warehouse:
         followups=frames["followups"],
         nightly_census=frames["nightly_census"],
         dq_issues=frames["dq_issues"],
+        note_findings=frames["note_findings"],
         meta=frames["meta"].iloc[0].to_dict(),
     )
 

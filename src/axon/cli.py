@@ -16,6 +16,9 @@ def main(argv: list[str] | None = None) -> int:
     ev = sub.add_parser("eval", help="Run the NL-to-spec evaluation set")
     ev.add_argument("--mode", choices=["replay", "record", "live"], default="replay")
     ev.add_argument("--model", default=None)
+    nev = sub.add_parser("notes-eval", help="Score staff-note extraction against eval/notes_gold.yaml")
+    nev.add_argument("--mode", choices=["replay", "record", "live"], default="replay")
+    nev.add_argument("--model", default=None)
     args = parser.parse_args(argv)
 
     if args.command == "build":
@@ -30,6 +33,10 @@ def main(argv: list[str] | None = None) -> int:
         path = write_report(args.tenant, args.fy)
         print(f"wrote {path}")
         return 0
+    if args.command == "notes-eval":
+        from axon.notes.evaluate import run_cli as notes_cli
+
+        return notes_cli(mode=args.mode, model=args.model)
     if args.command == "eval":
         from axon.evaluation import run_cli
 

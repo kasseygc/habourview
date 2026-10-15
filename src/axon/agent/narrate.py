@@ -10,6 +10,7 @@ import pandas as pd
 from axon.agent.registry import METRICS
 from axon.agent.spec import QuerySpec
 from axon.metrics.outcomes import OUTCOME_LABELS
+from axon.notes.schema import label
 from axon.suppress import is_small
 
 STATUS_LABELS = {"phase_1": "phase 1", "phase_2": "phase 2", "phase_3": "phase 3", "aftercare": "aftercare",
@@ -40,6 +41,14 @@ def narrate(spec: QuerySpec, df: pd.DataFrame) -> str:
         return _engaged(spec, df)
     if spec.metric == "followup_outcomes":
         return _outcomes(spec, df)
+    if spec.metric == "referrals_by_note":
+        total = int(df["n"].sum())
+        text = f"{total} referrals were not admitted {window_phrase(spec)}."
+        col = next((g for g in spec.group_by if g.startswith("note_")), None)
+        if col:
+            by = df.groupby(col)["n"].sum().sort_values(ascending=False)
+            text += " The staff notes say: " + "; ".join(f"{label(k)} {v}" for k, v in by.items()) + "."
+        return text
     if spec.metric == "residents_now":
         parts = ", ".join(f"{STATUS_LABELS.get(s, s)} {n}" for s, n in zip(df["current_status"], df["n"]))
         return f"{int(df['n'].sum())} people as of the extract date ({parts})."

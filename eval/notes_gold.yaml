@@ -1,0 +1,72 @@
+# Labelled staff notes for measuring extraction (D-26).
+# Part 1: every distinct note in the Harbourview file (they cover all 200 residents).
+# Part 2: notes written for this set in staff style, to test wording the rules have never seen,
+#         including a negation. All synthetic. Labelled by one person (in production: two, plus adjudication).
+# expect: list of field:value. An empty list means nothing should be extracted.
+
+- {status: not_admitted, note: "Referred by drug tx court; client did not attend", expect: [referral:no_show]}
+- {status: not_admitted, note: "pending - intake not booked yet", expect: [referral:pending_intake]}
+- {status: not_admitted, note: "Did not show on admission day", expect: [referral:no_show]}
+- {status: not_admitted, note: "Waitlisted. f/u call next wk", expect: [referral:waitlisted]}
+- {status: alumni, note: "Graduated. Volunteers at house occasionally.", expect: [engagement:alumni_involved]}
+- {status: not_admitted, note: "Phone disconnected. Closed referral.", expect: [referral:unreachable]}
+- {status: not_admitted, note: "referral recvd from hospital SW, unable to reach client", expect: [referral:unreachable]}
+- {status: alumni, note: "alumni - no contact since spring", expect: [engagement:no_recent_contact]}
+- {status: aftercare, note: "Completed. Moved to sober living, still attends alumni nite", expect: [engagement:sober_living, engagement:alumni_involved]}
+- {status: discharged, note: "Left AMA after conflict w/ peer.", expect: [discharge:self_discharge, discharge:peer_conflict]}
+- {status: not_admitted, note: "Client declined assessment - wants outpatient instead", expect: [referral:declined]}
+- {status: discharged, note: "Self-discharged. Stated wanted to go home.", expect: [discharge:self_discharge]}
+- {status: discharged, note: "res left during the night, belongings left behind", expect: [discharge:self_discharge]}
+- {status: not_admitted, note: "assessed - needs medical detox first, referred out", expect: [referral:referred_out]}
+- {status: discharged, note: "left AMA", expect: [discharge:self_discharge]}
+- {status: aftercare, note: "Graduated program. Attending weekly aftercare group.", expect: [engagement:aftercare_attending]}
+- {status: not_admitted, note: "on waitlist, will call when bed opens", expect: [referral:waitlisted]}
+- {status: discharged, note: "DISCHARGED FOR REPEATED RULE VIOLATIONS (USE ON PREMISES).", expect: [discharge:rule_violations, discharge:use_on_premises]}
+- {status: alumni, note: "Alumni. Attended alumni dinner.", expect: [engagement:alumni_involved]}
+- {status: discharged, note: "N/A", expect: []}
+- {status: aftercare, note: "aftercare check-in by phone - doing well, employed", expect: [engagement:aftercare_attending, engagement:doing_well, engagement:work]}
+- {status: not_admitted, note: "Not appropriate for level of care at this time.", expect: [referral:not_appropriate]}
+- {status: discharged, note: "Moved to program in home region.", expect: [discharge:moved_region]}
+- {status: discharged, note: "transferred to higher level of care (detox)", expect: [discharge:transfer_detox]}
+- {status: phase_3, note: "Discussed aftercare plan w/ case mgr", expect: [engagement:aftercare_planned]}
+- {status: discharged, note: "Discharged - see paper file", expect: []}
+- {status: not_admitted, note: "Declined bed offer, prefers program closer to family.", expect: [referral:declined]}
+- {status: discharged, note: "admin d/c - violence policy", expect: [discharge:violence]}
+- {status: not_admitted, note: "No-show for intake appt. Left VM x2.", expect: [referral:no_show]}
+- {status: phase_1, note: "Low mood this wk, referred to counsellor for check-in.", expect: [risk:low_mood]}
+- {status: phase_2, note: "Incident: vape found in room - verbal warning given.", expect: [risk:incident]}
+- {status: discharged, note: "Incarcerated - outstanding warrant", expect: [discharge:incarceration]}
+- {status: phase_2, note: "started part-time job search, good engagement in groups", expect: [engagement:work, engagement:attending_groups]}
+- {status: discharged, note: "-", expect: []}
+- {status: phase_1, note: "Res. settling in, attending all groups. Some cravings reported.", expect: [engagement:attending_groups, risk:cravings]}
+- {status: discharged, note: "Transferred to hospital for medical care.", expect: [discharge:transfer_hospital]}
+- {status: discharged, note: "Spoke w/ probation officer [NAME] re: conditions.", expect: []}
+- {status: aftercare, note: "Sister [NAME] dropped off clothes; res in good spirits.", expect: [engagement:doing_well]}
+- {status: not_admitted, note: "Mom ([NAME]) called asking about visiting hrs, call back [PHONE].", expect: []}
+- {status: not_admitted, note: "see notes in file", expect: []}
+- {status: alumni, note: "Res. asked staff to update emerg contact to brother [NAME] [PHONE].", expect: []}
+- {status: discharged, note: "Discharged: positive UA x2 and refused to engage w/ plan", expect: [discharge:positive_drug_test]}
+- {status: phase_2, note: "doing well. sponsor identified", expect: [engagement:doing_well, engagement:sponsor]}
+- {status: discharged, note: "no change", expect: []}
+- {status: phase_1, note: "new admit - orientation done, house rules signed", expect: []}
+- {status: aftercare, note: "missed last 2 aftercare sessions", expect: [engagement:aftercare_missed]}
+- {status: phase_3, note: "", expect: []}
+
+- {set: varied, status: not_admitted, note: "Called x3, no answer, mailbox full. Closing.", expect: [referral:unreachable]}
+- {set: varied, status: not_admitted, note: "Chose a day program near work instead.", expect: [referral:declined]}
+- {set: varied, status: not_admitted, note: "Intake booked for next Tuesday.", expect: [referral:pending_intake]}
+- {set: varied, status: not_admitted, note: "No bed yet - next in line when one frees up.", expect: [referral:waitlisted]}
+- {set: varied, status: not_admitted, note: "Needs medical clearance first, sent to withdrawal mgmt.", expect: [referral:referred_out]}
+- {set: varied, status: not_admitted, note: "Didn't turn up for assessment, court notified.", expect: [referral:no_show]}
+- {set: varied, status: phase_1, note: "Tearful in group, says she feels hopeless lately. Booked w/ counsellor.", expect: [risk:low_mood]}
+- {set: varied, status: phase_2, note: "Reports strong urges to use after family visit.", expect: [risk:cravings]}
+- {set: varied, status: phase_2, note: "Went to 2 NA and 1 AA mtg this wk, now has a sponsor.", expect: [engagement:attending_groups, engagement:sponsor]}
+- {set: varied, status: phase_3, note: "Started part-time work at a grocery store.", expect: [engagement:work]}
+- {set: varied, status: phase_2, note: "Altercation in the kitchen, staff stepped in, no injuries.", expect: [risk:incident]}
+- {set: varied, status: phase_2, note: "Denies cravings, mood stable.", expect: []}
+- {set: varied, status: discharged, note: "Walked out Sunday morning without telling staff.", expect: [discharge:self_discharge]}
+- {set: varied, status: discharged, note: "Sent to ER, admitted to the medical ward.", expect: [discharge:transfer_hospital]}
+- {set: varied, status: discharged, note: "Picked up by police on an old warrant.", expect: [discharge:incarceration]}
+- {set: varied, status: aftercare, note: "Hasn't come to aftercare in a month, not returning calls.", expect: [engagement:aftercare_missed, engagement:no_recent_contact]}
+- {set: varied, status: alumni, note: "Spoke at the alumni dinner, doing great.", expect: [engagement:alumni_involved, engagement:doing_well]}
+- {set: varied, status: phase_1, note: "Ate dinner, watched TV.", expect: []}

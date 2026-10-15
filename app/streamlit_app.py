@@ -25,7 +25,9 @@ from axon.metrics.occupancy import monthly_occupancy  # noqa: E402
 from axon.metrics.outcomes import OUTCOME_LABELS, outcomes  # noqa: E402
 from axon.metrics.stays import stays  # noqa: E402
 from axon.report.funder import render_html  # noqa: E402
-from axon.status import STATUS_ICON, board  # noqa: E402
+from axon.notes.review import ReviewStore  # noqa: E402
+from axon.notes.schema import FIELDS, label  # noqa: E402
+from axon.status import STATUS_ICON, board, review_queue  # noqa: E402
 from axon.tenants import TENANTS, get_tenant  # noqa: E402
 from axon.warehouse import build_all, load  # noqa: E402
 
@@ -128,11 +130,14 @@ if session.role == "funder":
     components.html(report_html, height=1500, scrolling=True)
     st.stop()
 
-tab_today, tab_ask, tab_funder, tab_dq = st.tabs(["Today", "Ask a question", "Funder report", "Data quality"])
+tab_today, tab_notes, tab_ask, tab_funder, tab_dq = st.tabs(
+    ["Today", "Staff notes", "Ask a question", "Funder report", "Data quality"])
+reviews = ReviewStore()
+decisions = reviews.decisions(session.tenant_id)
 
 # ---------------------------------------------------------------- today: status board
 with tab_today:
-    flags = board(w)
+    flags = board(w, decisions)
     with st.container(key="strip"):
         cols = st.columns(len(flags), gap="medium")
         for col, fl in zip(cols, flags):
@@ -192,6 +197,16 @@ with tab_today:
             if f.cohort_n > f.matured_n:
                 st.caption(f"{f.cohort_n - f.matured_n} people referred after {f.cutoff:%d %b %Y} are too recent to judge "
                            "and are not in these rates.")
+        cohort = w.residents[(w.residents["referral_fy"] == fy.year) & ~w.residents["admitted"]]
+        if len(cohort):
+            section("Not admitted: what the staff notes say",
+                    "Shown next to the recorded data, not instead of it. Not yet confirmed by staff.")
+            t = (cohort.assign(state=cohort["note_referral_state"].fillna("no usable note"),
+                               reason=cohort["note_referral"].fillna("no usable note").map(label),
+                               when=cohort["matured"].map({True: "Had 60+ days", False: "Too recent"}))
+                 .pivot_table(index=["state", "reason"], columns="when", values="resident_id", aggfunc="count", fill_value=0)
+                 .reset_index().rename(columns={"state": "Open or closed", "reason": "Note says"}))
+            st.dataframe(t, hide_index=True, width="stretch")
         st.markdown(
             f"""
 - Everyone referred in {fy.label}, followed to the extract date. Referrals from the last {MATURITY_DAYS} days are
@@ -245,6 +260,42 @@ with tab_today:
 - No known outcome has three parts, kept separate: lost to follow-up, unknown, and due but not recorded.
 """
         )
+
+# ---------------------------------------------------------------- staff notes
+with tab_notes:
+    ran = bool(w.meta.get("notes_model_ran"))
+    st.caption("Fields read from staff notes. Notes are redacted first; every value quotes the note it came from. "
+               "Recorded data stays the source of truth until staff confirm. "
+               + ("Read by rules and Claude." if ran else "Read by rules only: the model's answers aren't recorded yet, "
+                  "so nothing is agreed and everything waits for review."))
+    nf = w.note_findings
+    queue = review_queue(w, decisions)
+    c1, c2 = st.columns([3, 2], gap="large")
+    with c1:
+        section(f"Review queue · {len(queue)}", "Risk flags first. Confirm what the note says, or reject it.")
+        shown = queue.head(15)
+        if shown.empty:
+            st.markdown(":green-badge[:material/check_circle: Up to date] Nothing waiting for review.")
+        for row in shown.itertuples():
+            a, b, c = st.columns([4, 1.4, 1.3], vertical_alignment="center")
+            tag = {"risk": ":orange-badge[:material/warning: risk]", "referral": ":gray-badge[referral]",
+                   "discharge": ":gray-badge[discharge]", "engagement": ":gray-badge[engagement]"}[row.field]
+            a.markdown(f"{tag} **{label(row.value)}** · {row.resident_id}  \n:gray[“{row.quote}” · found by {row.source}]")
+            if b.button("Confirm", key=f"ok_{session.tenant_id}_{row.key}"):
+                reviews.decide(session.tenant_id, row.resident_id, row.field, row.value, "confirm", session.user_id)
+                st.rerun()
+            if c.button("Reject", key=f"no_{session.tenant_id}_{row.key}"):
+                reviews.decide(session.tenant_id, row.resident_id, row.field, row.value, "reject", session.user_id)
+                st.rerun()
+        if len(queue) > len(shown):
+            st.caption(f"{len(queue) - len(shown)} more in the queue.")
+    with c2:
+        section("What the notes add")
+        summary = (nf.assign(Field=nf["field"], Value=nf["value"].map(label))
+                   .groupby(["Field", "Value"]).agg(People=("resident_id", "nunique")).reset_index())
+        st.dataframe(summary, hide_index=True, width="stretch", height=420)
+        st.caption(f"{len(decisions)} staff decisions recorded. Quotes rejected by the validator at the last build: "
+                   f"{int(w.meta.get('notes_quotes_rejected', 0))}.")
 
 # ---------------------------------------------------------------- ask
 with tab_ask:

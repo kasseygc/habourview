@@ -246,4 +246,6 @@ def metric_caveats(spec: QuerySpec) -> list[str]:
         notes.append("Counted each night: a resident fills a bed from admission up to, not including, discharge.")
     if spec.metric == "residents_now":
         notes.append(f"Status as of the extract date, {AS_OF:%d %b %Y}.")
+    if spec.metric == "referrals_by_note":
+        notes.append("Read from staff notes by rules and a model. Not yet confirmed by staff; recorded fields are unchanged.")
     return notes

@@ -58,6 +58,8 @@ DIMENSIONS: dict[str, Dimension] = {
         Dimension("completion_group", "Completed or left early", "completion_group"),
         Dimension("current_status", "Current status", "current_status"),
         Dimension("outcome", "Follow-up outcome", "outcome"),
+        Dimension("note_referral_state", "Open or closed, per the staff note", "coalesce(note_referral_state, 'no usable note')"),
+        Dimension("note_referral", "What the staff note says", "coalesce(note_referral, 'no usable note')"),
     ]
 }
 
@@ -69,6 +71,8 @@ FILTERS: dict[str, FilterField] = {
         FilterField("completion_group", "Completed or left early", ("completed", "early_leaver"), "completion_group IN ({params})"),
         FilterField("current_status", "Current status", tuple(STATUSES), "current_status IN ({params})"),
         FilterField("horizon", "Follow-up point", ("6m", "12m"), "horizon_months = {params}"),
+        FilterField("note_referral_state", "Open or closed, per the staff note", ("open", "closed", "no usable note"),
+                    "coalesce(note_referral_state, 'no usable note') IN ({params})"),
     ]
 }
 
@@ -145,6 +149,15 @@ METRICS: dict[str, Metric] = {
             dimensions=("completion_group", "fee_status"),
             filters=("horizon", "completion_group", "fee_status", "discharge_reason"),
             required_filters=("horizon",), charts=("bar", "table"), value_column="engaged",
+        ),
+        Metric(
+            "referrals_by_note", "Referrals not admitted, by what the staff note says",
+            "Referrals that were not admitted, grouped by what the staff note says: still open (pending intake, "
+            "waitlisted) or closed and why (unreachable, declined, no-show, not appropriate, referred out). "
+            "Read from staff notes and not yet confirmed by staff. Dated by referral date.",
+            table="residents", select="COUNT(*) AS n", base_where="current_status = 'not_admitted'",
+            date_column="referral_date", dimensions=("note_referral_state", "note_referral", *TIME_DIMS),
+            filters=("note_referral_state",), charts=("bar", "stacked_bar", "table"),
         ),
         Metric(
             "residents_now", "Residents by current status (as of the extract date)",

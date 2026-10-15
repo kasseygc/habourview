@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
+
+# Tests never call the API: model answers come only from recordings in eval/cassettes.
+os.environ["AXON_LLM_MODE"] = "replay"
 from datetime import date
 
 import pandas as pd
