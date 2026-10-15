@@ -1,10 +1,11 @@
 """Altair (Vega-Lite) charts shared by the dashboard, the agent and the funder report.
 
-Colours come from the brand palette (#fdfdf9, #f3e6d7, #e1c7a5, #6aa6aa, #2c5e63), validated with the
-dataviz skill's checker against the #fdfdf9 surface. Dark teal carries single series. The palette's
-tan is too light for marks (1.6:1), so 'relapse reported' uses a deeper step of the same tan. Every
-'no known outcome' category uses one warm-neutral ordered ramp, so the unknown share reads as
-unknown, not as a result. Every chart has tooltips; tables sit alongside.
+Hybrid clinical palette, validated with the dataviz skill's checker against the #F8F9FA surface:
+- data marks use the brand teals: dark #2c5e63 for the main series, light #6aa6aa for the second
+  (admissions vs discharges; 'relapse reported' next to 'engaged'). Known outcomes are teal.
+- every 'no known outcome' category uses one slate ordered ramp, so the unknown share reads as unknown.
+- red / amber / green are status colours and never appear as data series.
+Light teal is 2.6:1 on the surface, so charts that use it ship with labels or a table.
 """
 
 from __future__ import annotations
@@ -16,19 +17,21 @@ from axon.agent.registry import DIMENSIONS, METRICS
 from axon.agent.spec import QuerySpec
 from axon.metrics.outcomes import OUTCOME_LABELS
 
-TEAL = "#2c5e63"        # brand dark teal: primary series
-TEAL_LIGHT = "#6aa6aa"  # brand mid teal: best-case range extension
-TAN_DEEP = "#b07a3c"    # deeper step of brand tan #e1c7a5: second series
-MUTED = "#ab9f8e"       # reference lines
-INK_2 = "#4f5d5c"       # secondary text
-BLUE, ORANGE = TEAL, TAN_DEEP
+TEAL = "#2c5e63"
+TEAL_LIGHT = "#6aa6aa"
+MUTED = "#94A3B8"     # reference lines
+INK = "#1E293B"
+INK_2 = "#475569"     # axis and label text
+GRID = "#E9EDF2"
+FONT = "Inter, Segoe UI, system-ui, sans-serif"
+BLUE, ORANGE = TEAL, TEAL_LIGHT
 OUTCOME_COLORS = {
-    "Engaged in recovery": BLUE,
-    "Relapse reported": ORANGE,
-    # One ordered warm-neutral ramp (validated as ordinal): tried and failed -> unknown -> never recorded.
-    "Lost to follow-up": "#4a4339",
-    "Unknown": "#7d7366",
-    "Due but not recorded": "#ab9f8e",
+    "Engaged in recovery": TEAL,
+    "Relapse reported": TEAL_LIGHT,
+    # Ordered slate ramp: tried and failed -> unknown -> never recorded.
+    "Lost to follow-up": "#475569",
+    "Unknown": "#7b8799",
+    "Due but not recorded": "#a9b3c1",
 }
 OUTCOME_ORDER = list(OUTCOME_COLORS)
 GROUP_LABELS = {"completed": "Completed the program", "early_leaver": "Left early"}
@@ -45,9 +48,9 @@ def _fit(chart):
     """Stretch to the container's width only. Plain 'fit' would squeeze the plot so axes and legend fit the height."""
     return (
         chart.properties(autosize=alt.AutoSizeParams(type="fit-x", contains="padding"), padding={"top": 8, "bottom": 8, "left": 4, "right": 12})
-        .configure(background="transparent")
-        .configure_axis(labelColor=INK_2, titleColor=INK_2, gridColor="#efe7dc", domainColor="#e1c7a5", tickColor="#e1c7a5",
-                        labelFontSize=12, titleFontSize=12, titlePadding=10, labelPadding=6)
+        .configure(background="transparent", font=FONT)
+        .configure_axis(labelColor=INK_2, titleColor=INK_2, gridColor=GRID, domainColor="#CBD5E1", tickColor="#CBD5E1",
+                        labelFontSize=12, titleFontSize=12, titleFontWeight=500, titlePadding=10, labelPadding=6)
         .configure_legend(labelColor=INK_2, labelFontSize=12, symbolSize=120, rowPadding=8, columnPadding=16, padding=10)
         .configure_view(stroke=None)
     )
@@ -90,6 +93,46 @@ def occupancy_chart(monthly: pd.DataFrame) -> alt.Chart:
     return _fit(full + line)
 
 
+def census_chart(census: pd.DataFrame) -> alt.Chart:
+    """Residents in the house each night, against the number of beds."""
+    df = census.assign(day=census["night"].dt.strftime("%a %d %b %Y"))
+    beds = int(census["capacity"].max())
+    line = _base(df).mark_line(color=TEAL, strokeWidth=1.75, interpolate="step-after").encode(
+        x=alt.X("night:T", title=None, axis=alt.Axis(format="%b", tickCount={"interval": "month", "step": 1}, labelAngle=0)),
+        y=alt.Y("residents:Q", title="Residents", scale=alt.Scale(domain=[0, beds + 2]), axis=alt.Axis(tickCount=4)),
+        tooltip=[alt.Tooltip("day:N", title="Night"), alt.Tooltip("residents:Q", title="Residents"),
+                 alt.Tooltip("capacity:Q", title="Beds")],
+    )
+    cap = alt.Chart(pd.DataFrame({"y": [beds], "label": [f"{beds} beds"]}))
+    rule = cap.mark_rule(color=MUTED, strokeDash=[4, 4]).encode(y="y:Q")
+    text = cap.mark_text(align="left", dx=4, dy=-7, color=INK_2, fontSize=11).encode(y="y:Q", x=alt.value(0), text="label:N")
+    return _fit((rule + text + line).properties(height=255))
+
+
+def flow_chart(residents: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp) -> alt.Chart:
+    """Admissions and discharges side by side, by month."""
+    months = pd.period_range(start, end, freq="M")
+    rows = []
+    for label, col in (("Admissions", "admission_date"), ("Discharges", "discharge_date")):
+        d = residents[col].dropna()
+        d = d[(d >= start) & (d <= end + pd.Timedelta(days=1))]
+        counts = d.dt.to_period("M").value_counts().reindex(months, fill_value=0)
+        rows += [{"month": m.to_timestamp(), "kind": label, "n": int(n)} for m, n in counts.items()]
+    df = pd.DataFrame(rows)
+    df["month_label"] = df["month"].dt.strftime("%b %Y")
+    return _fit(
+        _base(df).mark_bar(**BAR).encode(
+            x=alt.X("month(month):O", title=None, axis=alt.Axis(labelAngle=0)),
+            xOffset=alt.XOffset("kind:N", sort=["Admissions", "Discharges"]),
+            y=alt.Y("n:Q", title="People", axis=alt.Axis(tickMinStep=1, tickCount=4)),
+            color=alt.Color("kind:N", scale=alt.Scale(domain=["Admissions", "Discharges"], range=[TEAL, TEAL_LIGHT]),
+                            legend=alt.Legend(orient="top", title=None, direction="horizontal")),
+            tooltip=[alt.Tooltip("month_label:N", title="Month"), alt.Tooltip("kind:N", title=" "),
+                     alt.Tooltip("n:Q", title="People")],
+        ).properties(height=220)
+    )
+
+
 def km_chart(curve: pd.DataFrame) -> alt.Chart:
     start = pd.DataFrame({"days": [0], "share_still_in_house": [1.0], "at_risk": [None]})
     df = pd.concat([start, curve[["days", "share_still_in_house", "at_risk"]]], ignore_index=True)
@@ -119,7 +162,7 @@ def outcomes_chart(counts_by_group: pd.DataFrame, group_col: str | None = None, 
     df["Group label"] = df["Group"] + " (n=" + totals.astype(int).astype(str) + ")"
     chart = (
         _base(df)
-        .mark_bar(stroke="#fdfdf9", strokeWidth=2)
+        .mark_bar(stroke="#F8F9FA", strokeWidth=2)
         .encode(
             y=alt.Y("Group label:N", title=None, axis=alt.Axis(labelLimit=260)),
             x=alt.X("share:Q", title="Share of everyone due", axis=alt.Axis(format=".0%", tickCount=5), stack="zero", scale=alt.Scale(domain=[0, 1])),
@@ -177,10 +220,10 @@ def _agent_chart(spec: QuerySpec, df: pd.DataFrame) -> alt.Chart | None:
             tooltip=[alt.Tooltip(f"{x}:O", title=DIMENSIONS[x].label), alt.Tooltip(f"{value}:Q", title=m.label)],
         )
     if color:
-        return _base(df).mark_bar(stroke="#fdfdf9", strokeWidth=2).encode(
+        return _base(df).mark_bar(stroke="#F8F9FA", strokeWidth=2).encode(
             x=alt.X(f"{x}:O", title=DIMENSIONS[x].label), y=alt.Y(f"{value}:Q", title=m.label, stack="zero"),
             color=alt.Color(f"{color}:N", title=DIMENSIONS[color].label,
-                            scale=alt.Scale(range=[TEAL, TAN_DEEP, TEAL_LIGHT, "#7d7366"]), legend=alt.Legend(orient="bottom")),
+                            scale=alt.Scale(range=[TEAL, TEAL_LIGHT, "#475569", "#a9b3c1"]), legend=alt.Legend(orient="bottom")),
             tooltip=[f"{x}:O", f"{color}:N", alt.Tooltip(f"{value}:Q", title=m.label)],
         )
     return _simple_bar(df, x, value, m.label, pct=False)
@@ -213,7 +256,7 @@ def _engaged_range_chart(df: pd.DataFrame, group: str | None) -> alt.Chart:
     base = _base(d).encode(y=alt.Y("Group:N", title=None, axis=alt.Axis(labelLimit=260)))
     tooltip = [alt.Tooltip("Group:N"), alt.Tooltip("confirmed:Q", title="Confirmed engaged (worst case)", format=".0%"),
                alt.Tooltip("best:Q", title="Best case", format=".0%"), alt.Tooltip("no_outcome:Q", title="No known outcome")]
-    best = base.mark_bar(color=TEAL_LIGHT, opacity=0.55, **BAR).encode(
+    best = base.mark_bar(color="#C9DEDF", **BAR).encode(
         x=alt.X("best:Q", title="Engaged in recovery, share of everyone due", axis=alt.Axis(format=".0%", tickCount=5), scale=alt.Scale(domain=[0, 1])),
         tooltip=tooltip,
     )

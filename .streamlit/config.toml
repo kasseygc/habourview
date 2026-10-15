@@ -1,13 +1,47 @@
+# Hybrid clinical palette: clinical neutrals and navy text, the brand teals (#2c5e63, #6aa6aa) for data,
+# and red / amber / green reserved for status flags (always with an icon and a label).
+
 [theme]
 base = "light"
 primaryColor = "#2c5e63"
-backgroundColor = "#fdfdf9"
-secondaryBackgroundColor = "#f3e6d7"
-textColor = "#1f3436"
-font = "sans serif"
+backgroundColor = "#F8F9FA"
+secondaryBackgroundColor = "#F1F3F5"
+textColor = "#1E293B"
+borderColor = "#E2E8F0"
+dataframeBorderColor = "#E2E8F0"
+dataframeHeaderBackgroundColor = "#F1F3F5"
+dataframeHeaderTextColor = "#475569"
+linkColor = "#2c5e63"
+showWidgetBorder = true
+baseRadius = "6px"
+buttonRadius = "6px"
+font = "Inter, 'Segoe UI', system-ui, sans-serif"
+headingFontWeights = [600, 600, 600, 600, 600, 600]
+headingFontSizes = ["1.6rem", "1.2rem", "1.05rem", "1rem", "0.95rem", "0.9rem"]
+metricValueFontWeight = 600
+chartCategoricalColors = ["#2c5e63", "#6aa6aa", "#475569", "#7b8799", "#a9b3c1"]
+
+redColor = "#EF4444"
+redTextColor = "#B91C1C"
+redBackgroundColor = "#FEE2E2"
+orangeColor = "#F59E0B"
+orangeTextColor = "#B45309"
+orangeBackgroundColor = "#FEF3C7"
+greenColor = "#10B981"
+greenTextColor = "#047857"
+greenBackgroundColor = "#D1FAE5"
+grayTextColor = "#475569"
+grayBackgroundColor = "#E2E8F0"
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "app/static/fonts/InterVariable.woff2"
+weight = "100 900"
+style = "normal"
 
 [browser]
 gatherUsageStats = false
 
 [server]
 headless = true
+enableStaticServing = true

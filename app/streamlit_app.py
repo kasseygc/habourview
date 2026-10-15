@@ -1,4 +1,4 @@
-"""Harbourview analytics: director dashboard, natural-language questions, funder export.
+"""Harbourview analytics: status board, natural-language questions, funder export.
 
     uv run streamlit run app/streamlit_app.py
 """
@@ -16,34 +16,43 @@ from axon.agent.definitions import DefinitionStore  # noqa: E402
 from axon.agent.glossary import GLOSSARY  # noqa: E402
 from axon.agent.llm import has_api_credentials, resolve_mode  # noqa: E402
 from axon.agent.pipeline import Agent, Answer, Clarification, Session  # noqa: E402
-from axon.charts import agent_chart, funnel_chart, km_chart, legend_html, occupancy_chart, outcomes_chart  # noqa: E402
+from axon.charts import (  # noqa: E402
+    agent_chart, census_chart, flow_chart, funnel_chart, km_chart, legend_html, occupancy_chart, outcomes_chart,
+)
 from axon.config import MATURITY_DAYS, FiscalYear  # noqa: E402
 from axon.metrics.funnel import funnel  # noqa: E402
 from axon.metrics.occupancy import monthly_occupancy  # noqa: E402
 from axon.metrics.outcomes import OUTCOME_LABELS, outcomes  # noqa: E402
 from axon.metrics.stays import stays  # noqa: E402
 from axon.report.funder import render_html  # noqa: E402
+from axon.status import STATUS_ICON, board  # noqa: E402
 from axon.tenants import TENANTS, get_tenant  # noqa: E402
 from axon.warehouse import build_all, load  # noqa: E402
 
-st.set_page_config(page_title="Harbourview analytics", page_icon=":seedling:", layout="wide")
+st.set_page_config(page_title="Harbourview analytics", layout="wide", initial_sidebar_state="collapsed")
 
-# Room to breathe: generous line height, space between sections, narrower reading width.
 st.markdown(
     """
     <style>
-    .block-container { max-width: 1180px; padding-top: 2.5rem; padding-bottom: 4rem; }
-    [data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li { line-height: 1.7; }
-    [data-testid="stMarkdownContainer"] li { margin-bottom: .35rem; }
-    [data-testid="stCaptionContainer"] { line-height: 1.6; margin: .35rem 0 .9rem; }
-    [data-testid="stVerticalBlock"] { gap: 1.1rem; }
-    h1, [data-testid="stHeading"] h1 { color: #2c5e63 !important; letter-spacing: -0.01em; padding-bottom: .25rem; }
-    h3, [data-testid="stHeading"] h3 { color: #2c5e63 !important; margin-top: 2.75rem !important; margin-bottom: .5rem !important; }
-    [data-testid="stMetric"] { background: #f3e6d7; border-radius: 10px; padding: 1rem 1.1rem; }
-    [data-testid="stMetricLabel"] p { font-size: .9rem; }
-    [data-testid="stExpander"] details { border-color: #e1c7a5; border-radius: 10px; }
-    [data-testid="stChatMessage"] { padding: 1rem 1.1rem; margin-bottom: .75rem; }
-    .lede { color: #4f5d5c; font-size: 1.02rem; line-height: 1.7; margin: .25rem 0 1.25rem; max-width: 68ch; }
+    .block-container { max-width: 1200px; padding-top: 3rem; padding-bottom: 4rem; }
+    [data-testid="stSidebarCollapsedControl"] { display: none; }
+    [data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li { line-height: 1.65; }
+    [data-testid="stCaptionContainer"] { line-height: 1.55; }
+    .hdr-name { font-size: 1.45rem; font-weight: 600; color: #1E293B; margin: 0; letter-spacing: -0.01em; }
+    .hdr-meta { color: #475569; font-size: .9rem; margin: .2rem 0 0; }
+    .k-label { color: #475569; font-size: .85rem; margin-bottom: .15rem; }
+    .k-value { font-size: 1.9rem; font-weight: 600; color: #1E293B; font-variant-numeric: tabular-nums; line-height: 1.2; }
+    .k-unit { font-size: 1rem; font-weight: 400; color: #475569; }
+    .st-key-strip [data-testid="stColumn"] + [data-testid="stColumn"] { border-left: 1px solid #E2E8F0; padding-left: 1.25rem; }
+    .st-key-strip { border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; padding: 1rem 0 .75rem; }
+    .sec { font-size: .95rem; font-weight: 600; color: #1E293B; margin: 0 0 .25rem; }
+    .sec-sub { color: #475569; font-size: .85rem; margin: 0 0 .5rem; }
+    table.glance { width: 100%; border-collapse: collapse; font-size: .92rem; font-variant-numeric: tabular-nums; border: 0 !important; }
+    table.glance th, table.glance td { border-left: 0 !important; border-right: 0 !important; border-top: 0 !important; background: transparent !important; }
+    table.glance th { text-align: left; color: #475569; font-weight: 500; padding: .55rem .6rem; border-bottom: 1px solid #CBD5E1; }
+    table.glance td { padding: .6rem .6rem; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+    table.glance td.num { text-align: right; font-weight: 600; white-space: nowrap; }
+    table.glance td.base { color: #475569; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -55,10 +64,13 @@ EXAMPLES = [
     "What percentage of residents were sober at 6 months?",
     "How many active residents do we have, by phase?",
 ]
+# Demo sign-in. In production the role and house come from the identity provider.
 SIGN_INS = {
-    "Director, Harbourview House": Session("harbourview", "director@harbourview"),
-    "Director, Northshore Youth Residence": Session("northshore", "director@northshore"),
+    "Director · Harbourview House": Session("harbourview", "director@harbourview", "director"),
+    "Funder · Harbourview House": Session("harbourview", "funder@harbourview", "funder"),
+    "Director · Northshore Youth Residence": Session("northshore", "director@northshore", "director"),
 }
+BADGE = {"red": "red", "amber": "orange", "green": "green"}
 
 
 @st.cache_resource
@@ -68,8 +80,7 @@ def get_agent() -> Agent:
 
 @st.cache_resource
 def ensure_built() -> bool:
-    missing = [t for t in TENANTS.values() if t.csv_path.exists() and not t.warehouse_path.exists()]
-    if missing:
+    if any(t.csv_path.exists() and not t.warehouse_path.exists() for t in TENANTS.values()):
         build_all()
     return True
 
@@ -83,162 +94,157 @@ def fmt_days(v: float | None) -> str:
     return "–" if v is None or pd.isna(v) else f"{v:.0f}"
 
 
-def lede(text: str) -> None:
-    st.markdown(f'<p class="lede">{text}</p>', unsafe_allow_html=True)
+def section(title: str, sub: str | None = None) -> None:
+    st.markdown(f'<p class="sec">{title}</p>' + (f'<p class="sec-sub">{sub}</p>' if sub else ""), unsafe_allow_html=True)
 
 
-# ---------------------------------------------------------------- sidebar
+# ---------------------------------------------------------------- header and filters
 ensure_built()
-with st.sidebar:
+head, who_col, fy_col = st.columns([5, 2.2, 1.3], vertical_alignment="bottom")
+with who_col:
     who = st.selectbox("Signed in as (demo)", list(SIGN_INS))
-    session = SIGN_INS[who]
-    st.caption("Demo only. In production, your login decides the house.")
-    st.write("")
-    fy_year = st.radio("Fiscal year", [2025, 2024],
-                       format_func=lambda y: f"FY{y}" + ("  (Jul to Dec only)" if y == 2024 else ""))
-    fy = FiscalYear(fy_year)
-    w = get_warehouse(session.tenant_id)
-    st.write("")
-    st.caption(f"Data as of {w.as_of:%d %B %Y}")
-    st.caption("Synthetic data, fictional houses")
-    mode = resolve_mode()
-    st.caption("Questions answered live by Claude" if has_api_credentials() and mode != "replay"
-               else "Questions replay recorded answers (no API key set)")
-
+session = SIGN_INS[who]
+with fy_col:
+    fy = FiscalYear(st.selectbox("Period", [2025, 2024], format_func=lambda y: f"FY{y}" + (" (Jul–Dec)" if y == 2024 else "")))
 tenant = get_tenant(session.tenant_id)
-st.title(tenant.name)
-tab_dash, tab_ask, tab_funder, tab_dq = st.tabs(["Dashboard", "Ask a question", "Funder report", "Data quality"])
+w = get_warehouse(session.tenant_id)
+with head:
+    mode = resolve_mode()
+    live = has_api_credentials() and mode != "replay"
+    st.markdown(
+        f'<p class="hdr-name">{tenant.name}</p><p class="hdr-meta">{session.role.capitalize()} view · data as of '
+        f'{w.as_of:%d %b %Y} · synthetic data</p>',
+        unsafe_allow_html=True,
+    )
 
-# ---------------------------------------------------------------- dashboard
-with tab_dash:
-    f = funnel(w.residents, fy, w.as_of)
+# ---------------------------------------------------------------- funder role: the export only
+if session.role == "funder":
+    st.write("")
+    st.markdown(":gray-badge[:material/lock: Funder access] You see the published report only. "
+                "Counts from 1 to 4 are hidden, and so is any count that could be worked out from them.")
+    report_html = render_html(session.tenant_id, fy.year)
+    st.download_button("Download report", report_html, file_name=f"{session.tenant_id}_{fy.label}_funder_report.html",
+                       mime="text/html")
+    components.html(report_html, height=1500, scrolling=True)
+    st.stop()
+
+tab_today, tab_ask, tab_funder, tab_dq = st.tabs(["Today", "Ask a question", "Funder report", "Data quality"])
+
+# ---------------------------------------------------------------- today: status board
+with tab_today:
+    flags = board(w)
+    with st.container(key="strip"):
+        cols = st.columns(len(flags), gap="medium")
+        for col, fl in zip(cols, flags):
+            with col:
+                value = fl.value.replace(" / ", '<span class="k-unit"> / ') + ("</span>" if " / " in fl.value else "")
+                st.markdown(f'<div class="k-label">{fl.label}</div><div class="k-value">{value}</div>', unsafe_allow_html=True)
+                st.markdown(f":{BADGE[fl.status]}-badge[:material/{STATUS_ICON[fl.status]}: {fl.badge}]")
+                st.caption(fl.detail + (f"  \nNext: {fl.action}" if fl.action else ""))
+
+    start, end = pd.Timestamp(fy.start), min(pd.Timestamp(fy.end), pd.Timestamp(w.as_of))
+    census = w.nightly_census[(w.nightly_census["night"] >= start) & (w.nightly_census["night"] <= end)]
     occ = monthly_occupancy(w.nightly_census, fy)
+    st.write("")
+    c1, c2 = st.columns(2, gap="large")
+    with c1:
+        section("Residents each night", f"{fy.label} · beds filled {occ.rate:.0%} of nights")
+        st.altair_chart(census_chart(census), width="stretch")
+    with c2:
+        section("Admissions and discharges", f"{fy.label} · by month")
+        st.altair_chart(flow_chart(w.residents, start, end), width="stretch")
+    if fy.year == 2024:
+        st.caption(":material/info: The file starts with July 2024 referrals. Anyone already in the house then is missing, "
+                   "so early months may read low.")
+
+    f = funnel(w.residents, fy, w.as_of)
     s = stays(w.residents, fy)
     o6, o12 = outcomes(w.followups, 6), outcomes(w.followups, 12)
-    in_house = int(w.residents["in_residence"].sum())
-
-    lede(f"{fy.label}, January to December · data as of {w.as_of:%d %B %Y}"
-         + ("<br>The data starts in July 2024, so FY2024 covers July to December only." if fy.year == 2024 else ""))
-    k = st.columns(5, gap="medium")
-    k[0].metric("Referrals", f.cohort_n, help="Everyone referred in this fiscal year.")
-    k[1].metric("Admitted", f"{f.overall.rate:.0%}",
-                help=f"{f.overall.n} of {f.overall.of} referrals that had at least {MATURITY_DAYS} days to progress.")
-    k[2].metric("Beds filled", f"{occ.rate:.0%}", help="Bed-nights used ÷ (beds × nights) across the fiscal year.")
-    k[3].metric("In the house now", f"{in_house} of {w.capacity}", help="Phases 1 to 3 on the extract date.")
-    k[4].metric("Follow-ups due", o6.due_n, help="6-month follow-ups whose date has passed, across all years.")
-
-    # Funnel
-    st.subheader("From referral to admission")
-    lede(f"{f.overall.n} of {f.overall.of} people referred by {f.cutoff:%d %B %Y} were admitted "
-         f"({f.overall.rate:.0%}). Each had at least {MATURITY_DAYS} days to move forward.")
-    c1, c2 = st.columns(2, gap="large")
-    with c1:
-        st.altair_chart(funnel_chart(f.stages), width="stretch")
-    with c2:
-        timing = pd.DataFrame(
-            [{"Step": k_, "People": v.n, "Median days": fmt_days(v.median), "90% within (days)": fmt_days(v.p90)}
-             for k_, v in f.timings.items()]
-        )
-        st.markdown("**How long each step takes**")
-        st.dataframe(timing, hide_index=True, width="stretch")
-        st.caption("Counts only people who reached the next step.")
-    if f.cohort_n > f.matured_n:
-        st.markdown(f"**Too recent to judge:** {f.cohort_n - f.matured_n} people referred after {f.cutoff:%d %B %Y}")
-        st.dataframe(f.recent.rename(columns={"stage": "Where they are now", "n": "People",
-                                              "median_days_since_referral": "Median days since referral"}),
-                     hide_index=True)
-    with st.expander("How this is calculated"):
-        st.markdown(
-            f"""
-- **Cohort:** everyone referred in {fy.label}, followed forward to the extract date.
-- **Still in progress:** referrals from the last {MATURITY_DAYS} days before the extract date are kept out of the rates
-  and shown separately. {MATURITY_DAYS} days covers 90% of admissions.
-- **Admitted without an intake date:** counted as having passed intake, but left out of intake timings.
-- **Left out of timings:** {", ".join(f"{n} from '{k_.lower()}'" for k_, n in f.timing_exclusions.items() if n) or "none"}
-  (dates out of order or missing).
-- **Median and '90% within'** use linear interpolation, the same method as the database.
-"""
-        )
-
-    # Occupancy
-    st.subheader("Bed occupancy")
-    lede(f"Beds were {occ.rate:.0%} full across {fy.label}, counted each night. The dashed line is every bed full.")
-    st.altair_chart(occupancy_chart(occ.monthly), width="stretch")
-    if fy.year == 2024 or occ.monthly["month"].min() < pd.Timestamp("2025-04-01"):
-        st.caption("The file starts with July 2024 referrals. Anyone already living in the house before then is missing, "
-                   "so months before about April 2025 may read low.")
-    with st.expander("How this is calculated"):
-        st.markdown(
-            f"""
-- **Midnight count:** a resident fills a bed every night from admission up to, but not including, discharge.
-- **Monthly occupancy** = bed-nights used ÷ (beds × nights in the month).
-- **Missing discharge dates:** {int(w.residents['discharge_date_estimated'].sum())} people, estimated as admission +
-  {w.meta['estimated_stay_days']:.0f} days (the median early-leaver stay). Used for occupancy only:
-  {occ.estimated_bed_nights} of {occ.bed_nights} bed-nights this year.
-- **Aftercare** residents have left the house and do not fill a bed.
-"""
-        )
-        st.dataframe(occ.monthly.assign(month=occ.monthly["month"].dt.strftime("%b %Y"))[
-            ["month", "occupancy_rate", "avg_residents", "peak_residents", "beds", "nights"]].round(3),
-            hide_index=True, width="stretch")
-
-    # Length of stay
-    st.subheader("Length of stay")
-    lede(f"A typical stay for people admitted in {fy.label} is <b>{fmt_days(s.km_median_days)} days</b>, "
-         f"counting the {s.ongoing.n} people still in the house.")
-    c1, c2 = st.columns(2, gap="large")
-    with c1:
-        tbl = s.finished.rename(columns={"group": "Finished stays", "n": "People", "median_days": "Median days",
-                                         "p90_days": "90% within (days)"})
-        st.dataframe(tbl.round(0), hide_index=True, width="stretch")
-        st.markdown(f"**Still in the house:** {s.ongoing.n} people, {fmt_days(s.ongoing.median)} days so far "
-                    f"(median). Longest: {fmt_days(s.ongoing_max)} days.")
-    with c2:
-        st.altair_chart(km_chart(s.km_curve), width="stretch")
-        st.caption("Share still in the house, by days since admission.")
-    with st.expander("How this is calculated"):
-        st.markdown(
-            f"""
-- **Cohort:** people admitted in {fy.label} (n={s.admitted_n}).
-- **Finished stays only** would give a median of {fmt_days(s.finished_all.median)} days. That is biased short,
-  because the longest stays are the ones still going.
-- **Kaplan-Meier** counts people still in the house as "at least this many days" instead of dropping them.
-- **No discharge date:** {s.missing_discharge_date} people are left out, because their stay length is unknown.
-"""
-        )
-
-    # Outcomes
-    st.subheader("Outcomes after leaving")
-    lede("Everyone whose follow-up date has passed is counted, including people who left early. "
-         "Nobody is dropped for being hard to reach.")
-    st.markdown(legend_html(), unsafe_allow_html=True)
-    c1, c2 = st.columns(2, gap="large")
-    for col, r in ((c1, o6), (c2, o12)):
-        with col:
-            st.markdown(f"**{r.horizon_months}-month follow-up** · {r.due_n} people due")
-            counts = pd.DataFrame({"outcome": list(r.counts), "n": list(r.counts.values())})
-            st.altair_chart(outcomes_chart(counts, legend=False), width="stretch")
-            st.markdown(f"Confirmed engaged in recovery: **{r.engaged_worst_case:.0%}** ({r.engaged} of {r.due_n})")
-            st.markdown(f"If everyone we couldn't reach is engaged: **{r.engaged_best_case:.0%}**")
-            if r.due_n < 20:
-                st.caption(f"Only {r.due_n} people so far, mostly early leavers. Too few to judge.")
     st.write("")
-    st.markdown("**6-month outcomes: completed the program vs left early**")
-    by_group = o6.by_group.drop(columns="due").stack().rename("n").reset_index()
-    st.altair_chart(outcomes_chart(by_group, "completion_group", legend=False), width="stretch")
-    with st.expander("How this is calculated"):
+    section(f"{fy.label} at a glance")
+    rows = [
+        ("Referral to admission", f"{f.overall.rate:.0%}", f"{f.overall.n} of {f.overall.of} referrals with {MATURITY_DAYS}+ days to progress"),
+        ("Beds filled", f"{occ.rate:.0%}", f"{occ.bed_nights:,} of {occ.capacity_nights:,} bed-nights"),
+        ("Typical stay", f"{fmt_days(s.km_median_days)} days", f"{s.admitted_n} admitted, {s.ongoing.n} still in the house"),
+        ("Engaged in recovery at 6 months", f"{o6.engaged_worst_case:.0%}–{o6.engaged_best_case:.0%}",
+         f"{o6.due_n} due · {o6.engaged} confirmed · {o6.no_outcome} no known outcome · all years"),
+        ("Engaged in recovery at 12 months", f"{o12.engaged_worst_case:.0%}–{o12.engaged_best_case:.0%}",
+         f"{o12.due_n} due, mostly early leavers · too few to judge"),
+    ]
+    st.markdown(
+        '<table class="glance"><thead><tr><th>Measure</th><th style="text-align:right">Value</th><th>Based on</th></tr></thead><tbody>'
+        + "".join(f'<tr><td>{m}</td><td class="num">{v}</td><td class="base">{b}</td></tr>' for m, v, b in rows)
+        + "</tbody></table>",
+        unsafe_allow_html=True,
+    )
+    st.caption("Ranges run from worst case (nobody we couldn't reach is engaged) to best case (all of them are). "
+               "Outcomes are never reported only among people we reached.")
+
+    st.write("")
+    with st.expander("Referrals: from referral to admission"):
+        c1, c2 = st.columns(2, gap="large")
+        with c1:
+            st.altair_chart(funnel_chart(f.stages), width="stretch")
+        with c2:
+            st.dataframe(pd.DataFrame([{"Step": k, "People": v.n, "Median days": fmt_days(v.median),
+                                        "90% within (days)": fmt_days(v.p90)} for k, v in f.timings.items()]),
+                         hide_index=True, width="stretch")
+            if f.cohort_n > f.matured_n:
+                st.caption(f"{f.cohort_n - f.matured_n} people referred after {f.cutoff:%d %b %Y} are too recent to judge "
+                           "and are not in these rates.")
+        st.markdown(
+            f"""
+- Everyone referred in {fy.label}, followed to the extract date. Referrals from the last {MATURITY_DAYS} days are
+  kept out of the rates; {MATURITY_DAYS} days covers 90% of admissions.
+- Admitted without an intake date: counted as having passed intake, left out of intake timings.
+- Left out of timings: {", ".join(f"{n} from '{k.lower()}'" for k, n in f.timing_exclusions.items() if n) or "none"}.
+"""
+        )
+    with st.expander("Occupancy by month"):
+        st.altair_chart(occupancy_chart(occ.monthly), width="stretch")
+        st.markdown(
+            f"""
+- Counted each night: a resident fills a bed from admission up to, not including, discharge.
+- Missing discharge dates are estimated as admission + {w.meta['estimated_stay_days']:.0f} days (median early-leaver stay),
+  for occupancy only: {occ.estimated_bed_nights} of {occ.bed_nights:,} bed-nights.
+- Aftercare residents have left the house and do not fill a bed.
+"""
+        )
+    with st.expander("Length of stay"):
+        c1, c2 = st.columns(2, gap="large")
+        with c1:
+            st.dataframe(s.finished.rename(columns={"group": "Finished stays", "n": "People", "median_days": "Median days",
+                                                    "p90_days": "90% within (days)"}).round(0), hide_index=True, width="stretch")
+            st.caption(f"Still in the house: {s.ongoing.n} people, {fmt_days(s.ongoing.median)} days so far (median).")
+        with c2:
+            st.altair_chart(km_chart(s.km_curve), width="stretch")
+        st.markdown(
+            f"""
+- People admitted in {fy.label}. Finished stays alone give {fmt_days(s.finished_all.median)} days, biased short
+  because the longest stays are still going.
+- Kaplan-Meier counts people still in the house as "at least this many days".
+  {s.missing_discharge_date} people with no discharge date are left out.
+"""
+        )
+    with st.expander("Outcomes after leaving"):
+        st.markdown(legend_html(), unsafe_allow_html=True)
+        c1, c2 = st.columns(2, gap="large")
+        for col, r in ((c1, o6), (c2, o12)):
+            with col:
+                section(f"{r.horizon_months}-month follow-up", f"{r.due_n} people due")
+                st.altair_chart(outcomes_chart(pd.DataFrame({"outcome": list(r.counts), "n": list(r.counts.values())}),
+                                               legend=False), width="stretch")
+        section("6 months: completed the program vs left early")
+        by_group = o6.by_group.drop(columns="due").stack().rename("n").reset_index()
+        st.altair_chart(outcomes_chart(by_group, "completion_group", legend=False), width="stretch")
+        st.dataframe(pd.DataFrame([{OUTCOME_LABELS[k]: v for k, v in r.counts.items()} | {"Due": r.due_n,
+                     "Not yet due": r.not_yet_due_n} for r in (o6, o12)], index=["6 months", "12 months"]), width="stretch")
         st.markdown(
             """
-- **Who is counted:** everyone who has left the house and whose 6- or 12-month date (from discharge) has passed,
-  including people who left early.
-- **No known outcome** has three parts, kept separate: lost to follow-up (tried, couldn't reach), unknown,
-  and due but not recorded (a data-entry gap).
-- **Worst case** = confirmed engaged ÷ everyone due. **Best case** assumes everyone without an outcome is engaged.
-- **Not shown on purpose:** "engaged among people we reached". It leaves out everyone we lost touch with.
+- Everyone who has left and whose follow-up date (from discharge) has passed, including people who left early.
+- No known outcome has three parts, kept separate: lost to follow-up, unknown, and due but not recorded.
 """
         )
-        st.dataframe(pd.DataFrame([{OUTCOME_LABELS[k_]: v for k_, v in r.counts.items()} | {"Due": r.due_n,
-                     "Not yet due": r.not_yet_due_n} for r in (o6, o12)], index=["6 months", "12 months"]), width="stretch")
 
 # ---------------------------------------------------------------- ask
 with tab_ask:
@@ -247,39 +253,36 @@ with tab_ask:
     st.session_state.setdefault(turns_key, [])
     turns: list[dict] = st.session_state[turns_key]
 
-    lede("Ask about referrals, admissions, discharges, occupancy, follow-up outcomes or current residents.<br>"
-         "Answers are totals only. The AI never sees resident records, and every number comes from a checked query.")
-    st.markdown("**Try one**")
-    ex = st.columns(2, gap="medium")
+    st.caption("Totals only. The AI never sees resident records; every number comes from a checked, read-only query. "
+               + ("Answered live by Claude." if live else "Replaying recorded answers (no API key set)."))
+    ex = st.columns(4, gap="small")
     for i, q in enumerate(EXAMPLES):
-        if ex[i % 2].button(q, key=f"ex_{i}", width="stretch"):
+        if ex[i].button(q, key=f"ex_{i}", width="stretch"):
             turns.append({"question": q, "result": agent.ask(q, session)})
-    st.write("")
 
     def render(turn: dict, idx: int) -> None:
         r = turn["result"]
-        with st.chat_message("user"):
+        with st.chat_message("user", avatar=":material/person:"):
             st.markdown(turn["question"])
-        with st.chat_message("assistant"):
+        with st.chat_message("assistant", avatar=":material/query_stats:"):
             if isinstance(r, Answer):
                 st.markdown(r.text)
                 chart = agent_chart(r.spec, r.frame)
                 if chart is not None:
                     st.altair_chart(chart, width="stretch")
                 for d in r.definitions:
-                    st.caption(f"Using {tenant.name}'s definition of '{d.term}': {d.label}. "
-                               f"Version {d.version}, set by {d.defined_by}.")
+                    st.caption(f":material/bookmark: Using {tenant.name}'s definition of '{d.term}': {d.label} "
+                               f"(version {d.version}, set by {d.defined_by}).")
                 for c in r.caveats:
                     st.caption(c)
                 with st.expander("Data, spec and query"):
                     st.dataframe(r.frame, hide_index=True, width="stretch")
                     st.json(r.executed.model_dump(mode="json"), expanded=False)
                     st.code(r.sql, language="sql")
-                    st.caption(f"Parameters: {r.params}")
-                    st.caption(f"Spec {r.executed.hash} · audit event {r.event_id} · model answer: {r.llm_mode} · "
-                               f"query {r.elapsed_ms} ms")
+                    st.caption(f"Parameters {r.params} · spec {r.executed.hash} · audit {r.event_id} · "
+                               f"model: {r.llm_mode} · {r.elapsed_ms} ms")
             elif isinstance(r, Clarification):
-                st.markdown(f"**{r.question}**")
+                st.markdown(f":orange-badge[:material/help: Needs a definition] **{r.question}**")
                 st.markdown(r.why)
                 if turn.get("answered"):
                     st.caption(f"You chose: {turn['answered']}")
@@ -290,47 +293,42 @@ with tab_ask:
                             turn["answered"] = c.label
                             turns.append({"question": turn["question"], "result": agent.ask(turn["question"], session)})
                             st.rerun()
-                    st.caption(f"Your choice is saved as {tenant.name}'s definition and shown under every answer that uses it.")
+                    st.caption(f"Saved as {tenant.name}'s definition and shown under every answer that uses it.")
             else:
-                st.markdown(r.message)
-                st.caption(f"Audit event {r.event_id}")
+                st.markdown(f":gray-badge[:material/block: Not answered] {r.message}")
+                st.caption(f"Audit {r.event_id}")
 
     for i, t in enumerate(turns):
         render(t, i)
 
-    st.write("")
     with st.expander(f"{tenant.name} definitions"):
         current = DefinitionStore().current(session.tenant_id)
         if not current:
             st.caption("None yet. The first time a question uses a word like 'sober' or 'active', you'll be asked what it means.")
         for term, d in sorted(current.items()):
-            a, b = st.columns([5, 1])
-            a.markdown(f"**{term}**: {d.label}")
-            a.caption(f"Version {d.version}, set by {d.defined_by}, {d.defined_at}")
+            a, b = st.columns([6, 1], vertical_alignment="center")
+            a.markdown(f"**{term}**: {d.label}  \n:gray[version {d.version}, set by {d.defined_by}, {d.defined_at}]")
             if b.button("Reset", key=f"reset_{session.tenant_id}_{term}"):
                 DefinitionStore().save(session.tenant_id, term, None, session.user_id)
                 st.rerun()
         st.caption("Words that always need a definition: " + ", ".join(sorted(GLOSSARY)) + ".")
 
-    q = st.chat_input("Ask a question about your house")
+    q = st.chat_input("Ask about your house")
     if q:
         turns.append({"question": q, "result": agent.ask(q, session)})
         st.rerun()
 
-# ---------------------------------------------------------------- funder report
+# ---------------------------------------------------------------- funder report preview
 with tab_funder:
-    lede("This is what leaves the house. Counts from 1 to 4 are hidden, and so is any count that could be worked out "
-         "from them.<br>Download it, then print to PDF if you need one.")
+    st.caption("What leaves the house. Counts from 1 to 4 are hidden, and so is any count that could be worked out from them.")
     report_html = render_html(session.tenant_id, fy.year)
-    st.download_button("Download funder report (HTML)", report_html,
-                       file_name=f"{session.tenant_id}_{fy.label}_funder_report.html", mime="text/html")
-    st.write("")
+    st.download_button("Download report", report_html, file_name=f"{session.tenant_id}_{fy.label}_funder_report.html",
+                       mime="text/html")
     components.html(report_html, height=1500, scrolling=True)
 
 # ---------------------------------------------------------------- data quality
 with tab_dq:
-    lede("Every record that breaks a rule, and what the metrics do about it.<br>Internal only: this page lists resident IDs.")
+    st.caption("Every record that breaks a rule, and what the metrics do about it. Directors only: this page lists resident IDs.")
     dq = w.dq_issues
     st.dataframe(dq.groupby(["rule", "treatment"]).size().rename("records").reset_index(), hide_index=True, width="stretch")
-    st.write("")
     st.dataframe(dq, hide_index=True, width="stretch")

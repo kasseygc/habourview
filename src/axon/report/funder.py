@@ -5,6 +5,7 @@ The director's dashboard shows exact counts. This export is what leaves the hous
 
 from __future__ import annotations
 
+import base64
 import html
 from datetime import date
 from pathlib import Path
@@ -111,22 +112,32 @@ def build_sections(w: Warehouse, fy: FiscalYear) -> list[tuple[str, str]]:
     return sections
 
 
+FONT_PATH = Path(__file__).resolve().parents[3] / "app" / "static" / "fonts" / "InterVariable.woff2"
+
 CSS = """
-:root{--paper:#fdfdf9;--sand:#f3e6d7;--tan:#e1c7a5;--teal:#6aa6aa;--deep:#2c5e63;--ink:#1f3436;--ink2:#4f5d5c}
-body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--paper);max-width:760px;
-  margin:3rem auto;padding:0 20px;line-height:1.75;font-size:16px}
-h1{font-size:1.65rem;color:var(--deep);margin:0 0 .5rem;line-height:1.3}
-h2{font-size:1.15rem;color:var(--deep);margin:3rem 0 1rem;padding-bottom:.5rem;border-bottom:2px solid var(--sand)}
-p{margin:.75rem 0 1rem} ul{padding-left:1.25rem} li{margin-bottom:.6rem}
+:root{--bg:#F8F9FA;--panel:#F1F3F5;--line:#E2E8F0;--line2:#CBD5E1;--ink:#1E293B;--ink2:#475569;--teal:#2c5e63}
+body{font-family:Inter,"Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--bg);max-width:760px;
+  margin:3rem auto;padding:0 20px;line-height:1.7;font-size:15px;font-variant-numeric:tabular-nums}
+h1{font-size:1.5rem;font-weight:600;margin:0 0 .4rem;line-height:1.3}
+h2{font-size:1.05rem;font-weight:600;margin:2.75rem 0 .75rem;padding-bottom:.5rem;border-bottom:1px solid var(--line2)}
+p{margin:.6rem 0 1rem} ul{padding-left:1.2rem} li{margin-bottom:.55rem}
 .sub{color:var(--ink2);margin:0 0 2rem}
-table{border-collapse:collapse;width:100%;margin:1.25rem 0 1.5rem;font-variant-numeric:tabular-nums}
-th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--sand)}
-th{color:var(--ink2);font-weight:600;background:var(--sand)}
+table{border-collapse:collapse;width:100%;margin:1rem 0 1.5rem}
+th,td{text-align:left;padding:.55rem .6rem;border-bottom:1px solid var(--line)}
+th{color:var(--ink2);font-weight:500;border-bottom:1px solid var(--line2)}
 td:not(:first-child),th:not(:first-child){text-align:right}
-.chart{margin:1.5rem 0} .chart svg{max-width:100%;height:auto}
-strong{color:var(--deep)}
-@media print{body{margin:0;max-width:none}}
+.chart{margin:1.25rem 0} .chart svg{max-width:100%;height:auto}
+strong{font-weight:600;color:var(--teal)}
+@media print{body{margin:0;max-width:none;background:#fff}}
 """
+
+
+def _font_face() -> str:
+    """Embed Inter so the file stays self-contained and never calls out to a font server."""
+    if not FONT_PATH.exists():
+        return ""
+    data = base64.b64encode(FONT_PATH.read_bytes()).decode()
+    return f"@font-face{{font-family:Inter;src:url(data:font/woff2;base64,{data}) format('woff2');font-weight:100 900}}"
 
 
 def render_html(tenant_id: str, fy_year: int) -> str:
@@ -137,7 +148,7 @@ def render_html(tenant_id: str, fy_year: int) -> str:
     title = f"{tenant.name}: {fy.label} report for funders"
     return (
         f"<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>"
-        f"<title>{html.escape(title)}</title><style>{CSS}</style></head><body>"
+        f"<title>{html.escape(title)}</title><style>{_font_face()}{CSS}</style></head><body>"
         f"<h1>{html.escape(title)}</h1><p class='sub'>Fictional house, synthetic data. Data as of {w.as_of:%d %B %Y}.</p>"
         f"{body}</body></html>"
     )
