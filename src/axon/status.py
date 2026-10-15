@@ -1,4 +1,4 @@
-"""The status board: what is happening now and what needs doing (D-22).
+"""The status board: what is happening now and what needs doing (D-23).
 
 Each flag has a value, a status (red / amber / green) and a next step. Status colours are
 semantic and always shown with an icon and a label:

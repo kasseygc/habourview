@@ -1,4 +1,4 @@
-"""The one place that talks to Claude, with recorded replays for offline, deterministic runs (D-10).
+"""The one place that talks to Claude, with recorded replays for offline, deterministic runs (D-20).
 
 Modes (env AXON_LLM_MODE):
   auto    use a recording if one exists, otherwise call the API (if a key is set) and save it
