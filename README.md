@@ -1,13 +1,14 @@
 # Harbourview House analytics
 
 A take-home for Axon: a director's status board and funder report for a fictional recovery home
-(Task A), a prototype that answers plain-English questions with checked, read-only queries
-(Task B), and short written answers (Task C). All data is synthetic.
+(Task A), staff notes read into structured fields with a review queue, a prototype that answers
+plain-English questions with checked, read-only queries (Task B), and short written answers
+(Task C). All data is synthetic.
 
 - [WRITEUP.md](WRITEUP.md): one-page summary and Task C answers
 - [DECISIONS.md](DECISIONS.md): every decision, the options considered, and why
-- [docs/architecture.md](docs/architecture.md): the question-to-chart design, safety, PHI, evaluation
-- [eval/REPORT.md](eval/REPORT.md): latest evaluation scores (after recording)
+- [docs/architecture.md](docs/architecture.md): notes-to-fields and question-to-chart designs, safety, PHI, evaluation
+- [eval/NOTES_REPORT.md](eval/NOTES_REPORT.md) and [eval/REPORT.md](eval/REPORT.md): evaluation scores
 
 ## Run it
 
@@ -22,8 +23,9 @@ uv run streamlit run app/streamlit_app.py  # opens the app at http://localhost:8
 Other commands:
 
 ```bash
-uv run pytest                              # 125 tests
-uv run axon eval                           # score the 38 evaluation questions from recordings
+uv run pytest                              # 143 tests
+uv run axon eval                           # score the 40 evaluation questions from recordings
+uv run axon notes-eval                     # score note extraction on 65 labelled notes
 uv run axon report --fy 2025               # write the funder report to out/
 uv run python scripts/generate_data.py     # regenerate the second house (seeded, deterministic)
 ```
@@ -49,14 +51,15 @@ src/axon/
   model.py           build the shared tables: residents, followups, nightly_census
   quality.py         data-quality rules, each with its treatment
   metrics/           funnel, occupancy, length of stay, outcomes
-  status.py          the status board flags
+  status.py          the status board flags and the notes review queue
+  notes/             staff notes to fields: schema, rules, model, merge, review, evaluation
   suppress.py        small-count hiding for the funder report
   redact.py          PHI redaction for notes and questions
   synth.py           seeded generator for extra houses
   agent/             catalogue, spec, compiler, SQL guard, executor, glossary,
                      house definitions, prompt, LLM client, answer templates, audit log
   report/funder.py   the funder export
-app/                 Streamlit app (status board, questions, funder report, data quality)
+app/                 Streamlit app (status board, staff notes, questions, funder report, data quality)
 eval/                labelled questions, recordings, report
 tests/               metric edge cases, privacy, query safety, tenant isolation, agent flow
 ```

@@ -1,3 +1,35 @@
+# The language-model parts
+
+Two places use a model. Staff notes are read into structured fields (the most valuable use: the
+notes hold what the recorded fields don't). Plain-English questions are turned into checked,
+read-only queries. Both follow the same rule: the model fills a fixed schema; code checks it.
+
+## Staff notes to fields
+
+```mermaid
+flowchart LR
+    N[Staff note] --> R[Redact: names, phones, IDs]
+    R --> RU[Rules: familiar wording]
+    R --> M[Claude: fixed schema,<br/>quote for every finding]
+    M --> V[Validator: quote is in the note,<br/>field fits where the person is]
+    RU --> MG[Merge]
+    V --> MG
+    MG -->|risk, or rules and model disagree| Q[Staff review queue]
+    MG -->|agreed| F[Fields beside recorded data]
+    Q -->|confirmed| F
+```
+
+- Fields depend on where the person is (`src/axon/notes/schema.py`): referral status for people
+  never admitted, discharge details for early leavers, wellbeing and engagement for current residents.
+- The model sees the redacted note and the allowed fields; never a name, resident ID or date.
+- A finding is kept only if its quote appears in the note; invented quotes are counted and dropped.
+- Unique notes are batched (25 per call), so the whole house takes a few calls; results are recorded
+  for replay like the question tool.
+- Only structured values join the analytics tables (`residents.note_referral`, `note_referral_state`).
+  The findings with redacted quotes live in `note_findings`, which the question tool can't query and
+  only directors see.
+- Evaluation: `uv run axon notes-eval` scores rules, model and both against 65 labelled notes.
+
 # Task B: from a question to a chart
 
 The model's only job is to turn words into a small JSON spec. Code does everything else: it
@@ -94,8 +126,8 @@ graduates doing?"; then the choices are the catalogue metrics it suggested, neve
 
 ## Evaluation
 
-`eval/questions.yaml` holds 38 labelled questions: 20 answerable (counts, occupancy, outcomes,
-breakdowns), 3 with saved definitions, 7 that must trigger clarification, and 8 that must be
+`eval/questions.yaml` holds 40 labelled questions: 22 answerable (counts, occupancy, outcomes,
+breakdowns, referrals by what the notes say), 3 with saved definitions, 7 that must trigger clarification, and 8 that must be
 declined (individuals, writes, another house, prompt injection, out of scope).
 
 `uv run axon eval` scores:
@@ -116,8 +148,9 @@ questions (redacted), with the declines and clarifications reviewed by a person 
 
 ## PHI and where the model runs
 
-- **What the model sees:** the catalogue, the house's saved definitions and the redacted question.
-  No records, no results, no staff notes. Staff notes are not loaded into the analytics tables at all.
+- **What the model sees:** for questions, the catalogue, the house's saved definitions and the
+  redacted question, never records or results. For notes, one redacted note at a time with no
+  identifiers attached. Notes themselves never enter the analytics tables; only structured values do.
 - **Redaction:** questions are redacted before the call. Any identifier (a name next to a
   relationship word, a phone number, a resident ID) means the question is about a person, so it
   is declined before reaching the model. Answers are totals only; small counts are flagged in
