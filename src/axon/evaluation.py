@@ -158,7 +158,7 @@ def _pct(x: float | None) -> str:
 def write_report(results: list[CaseResult], s: dict, model: str, mode: str) -> Path:
     lines = [
         "# Evaluation report", "",
-        f"Model: `{model}` · mode: `{mode}` · {s['cases']} questions", "",
+        f"Model: `{model}`, mode: `{mode}`, {s['cases']} questions", "",
         "| Measure | Score |", "|---|---|",
         f"| Right kind of reply (answer / clarify / decline) | {_pct(s['action_accuracy'])} |",
         f"| Spec exactly right (answer cases) | {_pct(s['spec_exact'])} |",

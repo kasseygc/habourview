@@ -91,7 +91,7 @@ head, fy_col, export_col = st.columns([6, 1.3, 1.3], vertical_alignment="bottom"
 with fy_col:
     fy = FiscalYear(st.selectbox("Fiscal year", [2025, 2024], format_func=lambda y: f"FY{y}" + (" (Jul–Dec)" if y == 2024 else "")))
 with head:
-    show(f'<p class="hdr-name">{tenant.name}</p><p class="hdr-meta">As of {w.as_of:%d %b %Y} · Jan–Dec fiscal year · synthetic data</p>')
+    show(f'<p class="ax-name">{tenant.name}</p><p class="ax-meta">As of {w.as_of:%d %b %Y}, Jan–Dec fiscal year, synthetic data</p>')
 with export_col:
     st.download_button("Export", render_html(session.tenant_id, fy.year), file_name=f"{session.tenant_id}_{fy.label}_report.html",
                        mime="text/html", help="Funder report: counts from 1 to 4 hidden. Print to PDF from the browser.",
@@ -99,8 +99,8 @@ with export_col:
 
 flags = {f.key: f for f in board(w, decisions)}
 show(ui.strip([
-    ("bed", ui.SAGE, flags["beds"].value, "in the house · " + flags["beds"].detail.replace(" beds", "")),
-    ("inbox", ui.BLUE, flags["waiting"].value, "waiting for intake · " + flags["waiting"].detail.replace("notes say ", "notes: ")),
+    ("bed", ui.SAGE, flags["beds"].value, f"in the house, {flags['beds'].detail.replace(' beds', '')}"),
+    ("inbox", ui.BLUE, flags["waiting"].value, f"waiting for intake (notes: {flags['waiting'].detail.replace('notes say ', '')})"),
     ("phone", ui.ORANGE, flags["calls"].value, "calls due in 30 days"),
     ("file", ui.VIOLET, flags["missing"].value, "follow-ups not recorded"),
 ]))
@@ -116,16 +116,16 @@ o6, o12 = outcomes(w.followups, 6), outcomes(w.followups, 12)
 # ---------------------------------------------------------------- flow
 with tab_flow:
     t = f.timings
-    gaps = [f"{days(t['Referral to intake'].median)} days median · {days(t['Referral to intake'].p90)} P90",
-            f"{days(t['Intake to admission'].median)} days median · {days(t['Intake to admission'].p90)} P90"]
+    gaps = [f"median {days(t['Referral to intake'].median)} days, P90 {days(t['Referral to intake'].p90)}",
+            f"median {days(t['Intake to admission'].median)} days, P90 {days(t['Intake to admission'].p90)}"]
     stages = [("Referred", f.matured_n, str(f.matured_n)),
-              ("Intake", f.stages[1].n, f"{f.stages[1].n} · {pct(f.stages[1].n, f.matured_n)}%"),
-              ("Admitted", f.overall.n, f"{f.overall.n} · {pct(f.overall.n, f.matured_n)}%")]
+              ("Intake", f.stages[1].n, f"{f.stages[1].n} ({pct(f.stages[1].n, f.matured_n)}%)"),
+              ("Admitted", f.overall.n, f"{f.overall.n} ({pct(f.overall.n, f.matured_n)}%)")]
     excluded = ", ".join(f"{n} from {k.lower()}" for k, n in f.timing_exclusions.items() if n)
-    body = ui.funnel(stages, gaps) + (
-        f'<div class="sub" style="margin-top:.6rem">Referral to admission {days(t["Referral to admission"].median)} days median · '
-        f'{days(t["Referral to admission"].p90)} P90 · {f.cohort_n - f.matured_n} recent referrals not counted yet</div>')
-    show(ui.card(f"Referral → intake → admission · {fy.label}", body,
+    body = ui.funnel(stages, gaps) + ui.sub(
+        f'Referral to admission: median {days(t["Referral to admission"].median)} days, P90 '
+        f'{days(t["Referral to admission"].p90)}. {f.cohort_n - f.matured_n} recent referrals not counted yet.')
+    show(ui.card("Referral → intake → admission", body,
                  tip=f"Referrals made by {f.cutoff:%d %b %Y}, so each had {MATURITY_DAYS}+ days to progress; later ones are "
                      f"too recent to judge. Times are for people who moved on. Left out of timings (dates missing or out of "
                      f"order): {excluded or 'none'}. Percentages are of everyone referred."))
@@ -133,9 +133,10 @@ with tab_flow:
     counts = not_admitted["note_referral"].fillna("no usable note").value_counts()
     open_ = {"pending_intake", "waitlisted"}
     rows = [(label(k) + (" (open)" if k in open_ else ""), v,
-             ui.BLUE if k in open_ else (ui.GREY_3 if k == "no usable note" else ui.ORANGE), f"{v} · {pct(v, len(not_admitted))}%")
+             ui.BLUE if k in open_ else (ui.GREY_3 if k == "no usable note" else ui.ORANGE), f"{v} ({pct(v, len(not_admitted))}%)")
             for k, v in counts.items()]
-    show(ui.card(f"Why {len(not_admitted)} referrals weren't admitted · from staff notes", ui.hbars(rows), tip=NOTES_DISCLOSURE))
+    show(ui.card("Why referrals weren't admitted", ui.hbars(rows) + ui.sub(f"{len(not_admitted)} referrals not admitted. Read from staff notes."),
+                 tip=NOTES_DISCLOSURE))
 
 # ---------------------------------------------------------------- occupancy
 with tab_occ:
@@ -144,26 +145,27 @@ with tab_occ:
         ("Typical stay", days(s.km_median_days), " days", "counting stays still open"),
         ("Still in the house", str(s.ongoing.n), "", f"{days(s.ongoing.median)} days so far (median)"),
     ]))
-    tip = "Counted per night: a bed is filled from admission up to, not including, discharge."
+    tip = (f"{w.capacity} beds. Counted per night: a bed is filled from admission up to, not including, discharge. "
+           "The axis starts above zero to show the month-to-month change.")
     if occ.estimated_bed_nights:
         tip += (f" {occ.estimated_bed_nights} bed-nights use estimated discharge dates (admission + "
                 f"{w.meta['estimated_stay_days']:.0f} days) for people with none recorded.")
     if occ.monthly["month"].min() < pd.Timestamp("2025-04-01"):
         tip += " Months before April 2025 may read low: the file starts in July 2024."
     with st.container(border=True):
-        show(f'<div class="ct"><span>Monthly occupancy · {w.capacity} beds</span>{ui.info(tip)}</div>')
+        show(ui.title_row("Monthly occupancy", tip))
         st.altair_chart(occupancy_chart(occ.monthly), width="stretch")
     fin = s.finished.set_index("group")
     rows = []
     for g, col in [("Completed the program", ui.SAGE), ("Left early (all reasons)", ui.ORANGE)]:
         if g in fin.index:
             rows.append((g.replace(" (all reasons)", ""), float(fin.loc[g, "median_days"]), col,
-                         f"{days(fin.loc[g, 'median_days'])} d · P90 {days(fin.loc[g, 'p90_days'])} · n {int(fin.loc[g, 'n'])}"))
+                         f"{days(fin.loc[g, 'median_days'])} days (P90 {days(fin.loc[g, 'p90_days'])}, n={int(fin.loc[g, 'n'])})"))
     rows.append(("Still in the house", float(s.ongoing.median or 0), ui.BLUE,
-                 f"{days(s.ongoing.median)} d so far · n {s.ongoing.n}"))
-    show(ui.card(f"Length of stay · median days · admitted in {fy.label}", ui.hbars(rows) +
-                 f'<div class="sub" style="margin-top:.6rem">Typical stay {days(s.km_median_days)} days counts open stays; '
-                 f'finished stays alone: {days(s.finished_all.median)}</div>',
+                 f"{days(s.ongoing.median)} days so far (n={s.ongoing.n})"))
+    show(ui.card("Length of stay (median days)", ui.hbars(rows) +
+                 ui.sub(f"Admitted in {fy.label}. Typical stay {days(s.km_median_days)} days counts open stays; "
+                        f"finished stays alone: {days(s.finished_all.median)}."),
                  tip=f"Kaplan-Meier counts people still in the house as “at least this long”. {s.missing_discharge_date} "
                      "stays with no discharge date are left out of length of stay."))
 
@@ -175,9 +177,9 @@ with tab_out:
     show(ui.tiles([
         ("Completed", pct(completed, len(cohort)), " %", f"{completed} of {len(cohort)} admitted"),
         ("Engaged at 6 months", f"{100 * o6.engaged_worst_case:.0f}–{100 * o6.engaged_best_case:.0f}", " %",
-         f"worst to best case · {o6.due_n} due"),
+         f"worst to best case, {o6.due_n} due"),
         ("Engaged at 12 months", f"{100 * o12.engaged_worst_case:.0f}–{100 * o12.engaged_best_case:.0f}", " %",
-         f"{o12.due_n} due · too few to judge" if o12.due_n < 20 else f"{o12.due_n} due"),
+         f"{o12.due_n} due, too few to judge" if o12.due_n < 20 else f"worst to best case, {o12.due_n} due"),
     ]))
     exit_parts = [("Completed", int(ex.get("completed", 0)), ui.SAGE), ("Transferred", int(ex.get("transferred", 0)), ui.BLUE),
                   ("Left by choice", int(ex.get("left_by_choice", 0)), ui.ORANGE),
@@ -187,7 +189,7 @@ with tab_out:
     from_notes = int(cohort["exit_from_notes"].sum())
     c1, c2 = st.columns([3, 2], gap="medium")
     with c1:
-        show(ui.card(f"How stays ended · {len(cohort)} admitted in {fy.label}", ui.seg_bar(exit_parts),
+        show(ui.card("How stays ended", ui.seg_bar(exit_parts) + ui.sub(f"{len(cohort)} people admitted in {fy.label}"),
                      tip="Completion is counted separately from discharge. The recorded reason comes first"
                          + (f"; {from_notes} reasons recorded as “other” or blank were filled in from staff notes "
                             "(AI-assisted; not used in the funder report)." if from_notes else ".")))
@@ -195,16 +197,17 @@ with tab_out:
         left = cohort[cohort["exit_type"] != "still_in_program"]
         dest = left["destination"].fillna("not stated").value_counts()
         rows = [(label(k), v, ui.GREY_3 if k == "not stated" else ui.SAGE, str(v)) for k, v in dest.items()]
-        show(ui.card(f"Where {len(left)} people went next · from notes", ui.hbars(rows), tip=NOTES_DISCLOSURE))
+        show(ui.card("Where people went next", ui.hbars(rows) + ui.sub(f"{len(left)} people who have left. Read from staff notes."),
+                     tip=NOTES_DISCLOSURE))
     for r in (o6, o12):
         c = r.counts
         parts = [("Engaged in recovery", c["engaged_in_recovery"], ui.SAGE), ("Lost to follow-up", c["lost_to_follow_up"], ui.GREY_1),
                  ("Unknown", c["unknown"], ui.GREY_2), ("Not recorded", c["not_recorded"], ui.GREY_3),
                  ("Relapse reported", c["relapse_reported"], ui.ORANGE)]
         worst, best = 100 * r.engaged_worst_case, 100 * r.engaged_best_case
-        marks = [(0, f"◀ worst case {worst:.0f}%"), (best - 16, f"best case {best:.0f}% ▶")]
-        show(ui.card(f"{r.horizon_months}-month follow-up · {r.due_n} due" + (" · too few to judge" if r.due_n < 20 else ""),
-                     ui.seg_bar(parts, marks),
+        span = (worst, best, f"Engaged: {worst:.0f}% (worst case) to {best:.0f}% (best case)")
+        show(ui.card(f"{r.horizon_months}-month follow-up", ui.seg_bar(parts, span) +
+                     ui.sub(f"{r.due_n} people due" + (", too few to judge" if r.due_n < 20 else "")),
                      tip="Everyone whose follow-up date has passed counts, including people who left early; all years "
                          "pooled. Worst case: nobody we couldn't reach is engaged. Best case: all of them are. Never "
                          "reported only among people reached."))
@@ -216,10 +219,10 @@ with tab_notes:
     groups = summarize_notes(w.residents, w.note_findings)
     cols = st.columns(2, gap="medium")
     for i, g in enumerate(groups):
-        rows = [(label(v), n, FIELD_COLOR.get(fl, ui.GREY_2), f"{n} · {sh:.0%}") for fl, v, n, sh in g.table.itertuples(index=False)]
+        rows = [(label(v), n, FIELD_COLOR.get(fl, ui.GREY_2), f"{n} ({sh:.0%})") for fl, v, n, sh in g.table.itertuples(index=False)]
         with cols[i % 2]:
-            show(ui.card(f"{g.name} · {g.people} people", ui.hbars(rows, scale=g.people) if rows else
-                         '<div class="sub">Nothing found in these notes.</div>',
+            show(ui.card(g.name, (ui.hbars(rows, scale=g.people) if rows else ui.sub("Nothing found in these notes.", "0"))
+                         + ui.sub(f"{g.people} people"),
                          tip=NOTES_DISCLOSURE + f" {g.with_finding} of {g.people} have a usable note."
                              + (" No note in this file mentions a pass." if g.name == "In the house now" and hl["Passes mentioned"][0] == 0 else "")))
 
