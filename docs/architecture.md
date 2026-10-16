@@ -28,7 +28,7 @@ flowchart LR
 - Only structured values join the analytics tables (`residents.note_referral`, `note_referral_state`).
   The findings with redacted quotes live in `note_findings`, which the question tool can't query and
   only directors see.
-- Evaluation: `uv run axon notes-eval` scores rules, model and both against 65 labelled notes.
+- Evaluation: `uv run axon notes-eval` scores rules, model and both against 70 labelled notes.
 
 # Task B: from a question to a chart
 
