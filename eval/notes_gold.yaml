@@ -71,7 +71,7 @@
 - {set: varied, status: alumni, note: "Spoke at the alumni dinner, doing great.", expect: [engagement:alumni_involved, engagement:doing_well]}
 - {set: varied, status: phase_1, note: "Ate dinner, watched TV.", expect: []}
 - {set: varied, status: phase_2, note: "Res. back from weekend pass, appears well, attending NA 3x/wk", expect: [passes:pass_returned, engagement:doing_well, engagement:attending_groups]}
-- {set: varied, status: phase_1, note: "Weekend pass approved for a family visit.", expect: [passes:pass_taken]}
+- {set: varied, status: phase_1, note: "Weekend pass approved for a family visit.", expect: []}
 - {set: varied, status: phase_3, note: "Came back 3 hrs late from day pass, says the bus was late.", expect: [passes:pass_late_or_missed]}
 - {set: varied, status: phase_2, note: "Didn't come back from overnight pass; staff left a message.", expect: [passes:pass_late_or_missed]}
 - {set: varied, status: alumni, note: "Graduated, now living with family and working.", expect: [destination:home_or_family, engagement:work]}

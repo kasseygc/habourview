@@ -200,3 +200,19 @@ def test_residents_now_says_what_it_counted(make_agent):
     agent, _ = make_agent({"everyone": answer({"metric": "residents_now"})})
     r = agent.ask("How many people are there in total, everyone?", HV)
     assert isinstance(r, Answer) and "counting every current status" in r.text
+
+
+def test_occupancy_with_no_grouping_is_one_total_for_the_window():
+    spec = QuerySpec.model_validate({"metric": "occupancy", "chart": "table",
+                                     "time_window": {"preset": "custom", "start": "2025-10-11", "end": "2025-10-11"}})
+    q = compile_spec(spec)
+    frame = run_query(get_tenant("harbourview"), q.sql, q.params).frame
+    assert len(frame) == 1 and int(frame["peak_residents"].iloc[0]) == 24
+
+
+def test_outcome_filter_counts_one_outcome(make_agent):
+    spec = answer({"metric": "followup_outcomes", "chart": "bar",
+                   "filters": [{"field": "outcome", "values": ["lost_to_follow_up"]}, {"field": "horizon", "values": ["6m"]}]})
+    agent, _ = make_agent({"lost": spec})
+    r = agent.ask("How many people were lost to follow-up at 6 months?", HV)
+    assert isinstance(r, Answer) and r.text == "15 people whose 6-month follow-up was due: lost to follow-up."

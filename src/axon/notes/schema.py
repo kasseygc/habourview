@@ -50,7 +50,7 @@ FIELDS: dict[str, dict[str, str]] = {
         "no_recent_contact": "no contact for a while",
     },
     "passes": {
-        "pass_taken": "a day, overnight or weekend pass was approved or taken",
+        "pass_taken": "went out on a day, overnight or weekend pass (approved or planned alone is not taken)",
         "pass_returned": "came back from a pass as expected",
         "pass_late_or_missed": "came back late from a pass, or did not come back",
     },

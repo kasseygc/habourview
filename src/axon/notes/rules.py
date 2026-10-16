@@ -40,7 +40,7 @@ PATTERNS: dict[tuple[str, str], str] = {
     ("engagement", "alumni_involved"): r"alumni (?:dinner|nite|night)|volunteers at house",
     ("engagement", "doing_well"): r"doing well|good spirits",
     ("engagement", "no_recent_contact"): r"no contact since",
-    ("passes", "pass_taken"): r"(?:day|overnight|weekend) pass (?:approved|granted)|on (?:a )?(?:day|overnight|weekend) pass",
+    ("passes", "pass_taken"): r"(?<!approved for )on (?:a |the )?(?:day|overnight|weekend) pass|(?:went|left) (?:out )?on (?:a |the )?(?:day |overnight |weekend )?pass",
     ("passes", "pass_returned"): r"back from (?:a |the )?(?:day |overnight |weekend )?pass|returned from (?:a |the )?(?:day |overnight |weekend )?pass",
     ("passes", "pass_late_or_missed"): r"late (?:back |return(?:ing)? )?from (?:a |the )?(?:day |overnight |weekend )?pass|did not return from (?:a |the )?(?:day |overnight |weekend )?pass",
     ("destination", "sober_living"): r"sober living",

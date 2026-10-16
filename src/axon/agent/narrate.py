@@ -91,12 +91,14 @@ def _occupancy(spec: QuerySpec, df: pd.DataFrame) -> str:
         return f"On the night of {night:%d %b %Y}, {n} of {beds} beds were filled ({n / beds:.0%})."
     overall = (df["occupancy_rate"] * df["beds"] * df["nights"]).sum() / (df["beds"] * df["nights"]).sum()
     avg = (df["avg_residents"] * df["nights"]).sum() / nights
+    text = f"Beds were {overall:.0%} full on average {window_phrase(spec)} ({avg:.1f} of {beds} beds a night)."
+    if not spec.group_by:
+        return text + f" Highest single night: {int(df['peak_residents'].max())} of {beds}."
     col = spec.group_by[0]
     hi = df.loc[df["occupancy_rate"].idxmax()]
     lo = df.loc[df["occupancy_rate"].idxmin()]
     return (
-        f"Beds were {overall:.0%} full on average {window_phrase(spec)} ({avg:.1f} of {beds} beds a night). "
-        f"Fullest {col.replace('_', ' ')}: {hi[col]} ({hi['occupancy_rate']:.0%}); "
+        f"{text} Fullest {col.replace('_', ' ')}: {hi[col]} ({hi['occupancy_rate']:.0%}); "
         f"emptiest: {lo[col]} ({lo['occupancy_rate']:.0%}). Highest single night: {int(df['peak_residents'].max())} of {beds}."
     )
 
@@ -126,6 +128,15 @@ def _engaged(spec: QuerySpec, df: pd.DataFrame) -> str:
 
 def _outcomes(spec: QuerySpec, df: pd.DataFrame) -> str:
     h = _horizon(spec)
+    chosen = next((f for f in spec.filters if f.field == "outcome"), None)
+    if chosen is not None and "outcome" not in spec.group_by:
+        which = " or ".join(OUTCOME_LABELS[str(v)].lower() for v in chosen.values)
+        n = int(df["n"].sum())
+        if chosen.op == "not_in":
+            return f"{n} people whose {h} follow-up was due had an outcome other than {which}."
+        return f"{n} people whose {h} follow-up was due: {which}."
+    if "outcome" not in df.columns:
+        return f"{int(df['n'].sum())} people had a {h} follow-up due."
     by = df.groupby("outcome")["n"].sum()
     due = int(by.sum())
     engaged = int(by.get("engaged_in_recovery", 0))

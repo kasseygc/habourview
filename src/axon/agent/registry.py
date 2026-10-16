@@ -90,6 +90,8 @@ FILTERS: dict[str, FilterField] = {
         FilterField("discharge_reason", "Discharge reason", "discharge_reason", values=(*DISCHARGE_REASONS, "not_recorded")),
         FilterField("completion_group", "Completed or left early", "completion_group", values=("completed", "early_leaver")),
         FilterField("current_status", "Current status", "current_status", values=tuple(STATUSES)),
+        FilterField("outcome", "Follow-up outcome", "outcome",
+                    values=("engaged_in_recovery", "relapse_reported", "lost_to_follow_up", "unknown", "not_recorded")),
         FilterField("horizon", "Follow-up point", "horizon_months", values=("6m", "12m"), ops=("in",), single=True,
                     param_map=(("6m", 6), ("12m", 12))),
         FilterField("note_referral_state", "Open or closed, per the staff note",
@@ -150,13 +152,14 @@ METRICS: dict[str, Metric] = {
         Metric(
             "occupancy", "Bed occupancy",
             "Share of beds filled, counted each night: bed-nights used / (beds x nights). "
-            "Also returns average and peak residents per night.",
+            "Also returns average and peak residents per night. With no grouping, one total for the window "
+            "(for a single night, the number of people in the house that night).",
             table="nightly_census",
             select=(
                 "SUM(residents) * 1.0 / SUM(capacity) AS occupancy_rate, AVG(residents) AS avg_residents, "
                 "MAX(residents) AS peak_residents, MAX(capacity) AS beds, COUNT(*) AS nights"
             ),
-            date_column="night", dimensions=TIME_DIMS, required_dimensions=("month", "quarter", "fiscal_year"),
+            date_column="night", dimensions=TIME_DIMS,
             charts=("line", "bar", "table"), value_column="occupancy_rate",
         ),
         Metric(
@@ -168,8 +171,8 @@ METRICS: dict[str, Metric] = {
             select="COUNT(*) AS n",
             base_where="is_due", date_column="discharge_date",
             dimensions=("outcome", "completion_group", "fee_status"),
-            filters=("horizon", "completion_group", "fee_status", "discharge_reason"),
-            required_filters=("horizon",), required_dimensions=("outcome",),
+            filters=("horizon", "outcome", "completion_group", "fee_status", "discharge_reason"),
+            required_filters=("horizon",),
             charts=("stacked_bar", "bar", "table"),
         ),
         Metric(

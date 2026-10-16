@@ -7,7 +7,8 @@ plain-English questions with checked, read-only queries (Task B), and short writ
 
 - [docs/architecture.md](docs/architecture.md): notes-to-fields and question-to-chart designs, safety, PHI, evaluation
 - [docs/Harbourview_design_and_reasoning.docx](docs/Harbourview_design_and_reasoning.docx): the design, with diagrams, for review
-- [docs/review/evaluation_review.xlsx](docs/review/evaluation_review.xlsx): the question set and labelled notes, to check
+- [docs/review/evaluation_review_completed.xlsx](docs/review/evaluation_review_completed.xlsx): my review of every
+  question and labelled note; [eval/REVIEW.md](eval/REVIEW.md) records what it changed
 - [eval/NOTES_REPORT.md](eval/NOTES_REPORT.md) and [eval/REPORT.md](eval/REPORT.md): evaluation scores
 
 ## Run it
@@ -52,6 +53,15 @@ uv run axon eval --mode record          # re-run the 45 questions through the mo
 uv run axon notes-eval --mode record    # re-run the 70 labelled notes
 ```
 
+The labelled sets were checked by a person. A filled-in review sheet is read back, validated against
+the catalogue and the notes schema, and applied to the gold files; anything that doesn't validate is
+reported, not guessed:
+
+```bash
+uv run python scripts/read_review_sheet.py            # report only
+uv run python scripts/read_review_sheet.py --apply    # write valid corrections to eval/*.yaml
+```
+
 ## What's where
 
 ```
@@ -61,7 +71,7 @@ src/axon/
   model.py           build the shared tables: residents, followups, nightly_census
   quality.py         data-quality rules, each with its treatment
   metrics/           funnel, occupancy, length of stay, outcomes
-  status.py          the status board flags and the notes review queue
+  status.py          the four status-strip facts (and the notes review queue, not shown in the app)
   notes/             staff notes to fields: schema, rules, model, merge, review, evaluation
   suppress.py        small-count hiding for the funder report
   redact.py          PHI redaction for notes and questions
@@ -69,8 +79,9 @@ src/axon/
   agent/             catalogue, spec, compiler, SQL guard, executor, glossary,
                      house definitions, prompt, LLM client, answer templates, audit log
   report/funder.py   the funder export
-app/                 Streamlit app (status board, staff notes, questions, funder report, data quality)
-eval/                labelled questions, recordings, report
+app/                 Streamlit app (status strip, flow, occupancy, outcomes, notes, questions, export)
+eval/                labelled questions and notes, recordings, reports, review record
+scripts/             generate_data.py (test house), read_review_sheet.py (human review read-back)
 tests/               metric edge cases, privacy, query safety, tenant isolation, agent flow
 ```
 

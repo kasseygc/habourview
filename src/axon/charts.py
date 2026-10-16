@@ -213,7 +213,7 @@ def _agent_chart(spec: QuerySpec, df: pd.DataFrame) -> alt.Chart | None:
         return None
     m = METRICS[spec.metric]
     if spec.metric == "occupancy":
-        if int(df["nights"].sum()) == 1:
+        if int(df["nights"].sum()) == 1 or not spec.group_by:
             return None
         x = spec.group_by[0]
         d = df.assign(month=pd.to_datetime(df[x])) if x == "month" else df
@@ -222,6 +222,8 @@ def _agent_chart(spec: QuerySpec, df: pd.DataFrame) -> alt.Chart | None:
             return occupancy_chart(d)
         return _simple_bar(df, x, "occupancy_rate", "Beds filled", pct=True)
     if spec.metric == "followup_outcomes":
+        if "outcome" not in df.columns:
+            return _simple_bar(df, spec.group_by[0], "n", "People", pct=False) if spec.group_by else None
         group = next((g for g in spec.group_by if g != "outcome"), None)
         return outcomes_chart(df, group)
     if spec.metric == "followup_engaged_rate":

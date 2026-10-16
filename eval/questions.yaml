@@ -72,7 +72,7 @@
   category: occupancy
   question: How many people were in the house on October 11 2025?
   kind: answer
-  spec: {metric: occupancy, group_by: [month], time_window: {preset: custom, start: 2025-10-11, end: 2025-10-11}, chart: table}
+  spec: {metric: occupancy, time_window: {preset: custom, start: 2025-10-11, end: 2025-10-11}, chart: table}
 
 - id: f01
   category: outcomes
@@ -98,7 +98,7 @@
   category: outcomes
   question: How many people were lost to follow-up at 6 months?
   kind: answer
-  spec: {metric: followup_outcomes, group_by: [outcome], filters: [{field: horizon, values: [6m]}], chart: stacked_bar}
+  spec: {metric: followup_outcomes, filters: [{field: outcome, values: [lost_to_follow_up]}, {field: horizon, values: [6m]}], chart: bar}
 
 - id: r01
   category: breakdown
@@ -114,7 +114,7 @@
   category: breakdown
   question: Break down everyone we have admitted by their current status.
   kind: answer
-  spec: {metric: residents_now, group_by: [current_status], chart: bar}
+  spec: {metric: residents_now, group_by: [current_status], filters: [{field: current_status, op: not_in, values: [not_admitted]}], chart: bar}
 
 - id: n01
   category: notes

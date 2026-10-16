@@ -105,7 +105,7 @@ def test_filter_values_are_bound_parameters_not_sql():
 
 @pytest.mark.parametrize("bad", [
     {"metric": "occupancy", "group_by": ["fee_status"]},                       # not allowed for metric
-    {"metric": "occupancy"},                                                  # needs a time grouping
+    {"metric": "stay_outcomes"},                                              # needs how it ended or where they went
     {"metric": "followup_outcomes", "group_by": ["outcome"]},                  # needs horizon
     {"metric": "residents_now", "time_window": {"preset": "fy2025"}},         # point in time
     {"metric": "admissions", "time_window": {"preset": "custom"}},             # custom needs dates
