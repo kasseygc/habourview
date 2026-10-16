@@ -36,6 +36,10 @@ ROW_LEVEL = re.compile(
 )
 IDENTIFIER_TAGS = {"NAME", "RESIDENT_ID", "PHONE", "EMAIL", "HEALTH_CARD", "SIN"}
 
+# Every AI-assisted output says so (as Axon does for every AI-assisted report).
+AI_DISCLOSURE = ("AI-assisted: a self-hosted language model turned your question into a query. It never saw "
+                 "resident records, and every number comes from the executed query. Review before sharing.")
+
 DECLINE_MESSAGES = {
     "row_level": "I can only give totals, not information about individual people. "
                  "For a specific person, open their case file, which has its own access controls.",
@@ -91,6 +95,7 @@ class Answer:
     elapsed_ms: int = 0
     llm_mode: str = ""
     event_id: str | None = None
+    disclosure: str = AI_DISCLOSURE
     kind: str = "answer"
 
     @property
@@ -214,7 +219,7 @@ class Agent:
             llm_mode=llm_mode,
         )
         return done(answer, spec_hash=executed.hash, spec=executed.model_dump(mode="json"), sql=query.sql,
-                    row_count=len(frame), truncated=result.truncated, query_ms=result.elapsed_ms)
+                    row_count=len(frame), truncated=result.truncated, query_ms=result.elapsed_ms, ai_assisted=True)
 
     def define(self, session: Session, term: str, choice_id: str) -> None:
         self.store.save(session.tenant_id, term, choice_id, session.user_id)

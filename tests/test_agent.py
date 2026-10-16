@@ -119,6 +119,7 @@ def test_audit_log_records_the_query_but_never_results(make_agent, tmp_path):
     assert record["tenant"] == "harbourview" and record["spec_hash"] == r.executed.hash
     assert record["sql"] == r.sql and record["row_count"] == 12
     assert "frame" not in record and "text" not in record and "81" not in json.dumps(record["spec"])
+    assert record["ai_assisted"] is True and r.disclosure.startswith("AI-assisted")
 
 
 def test_audit_log_never_stores_phi_from_the_question(make_agent, tmp_path):

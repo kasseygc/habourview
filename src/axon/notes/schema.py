@@ -81,6 +81,10 @@ ALWAYS_REVIEW = {"risk"}
 NEEDS_AGREEMENT = {"referral", "discharge", "destination"}
 
 
+NOTES_DISCLOSURE = ("Read from redacted staff notes with AI assistance (a self-hosted model plus rules). "
+                    "Not used in funder figures until a staff member confirms it.")
+
+
 @dataclass(frozen=True)
 class Finding:
     field: str

@@ -1,37 +1,37 @@
-# Hybrid clinical palette: clinical neutrals and navy text, the brand teals (#2c5e63, #6aa6aa) for data,
-# and red / amber / green reserved for status flags (always with an icon and a label).
+# Axon Health's palette (read from axonhealth.io): white and lavender-grey surfaces, near-black and
+# slate text, one sage-green accent. Red / amber / green are kept for status flags only.
 
 [theme]
 base = "light"
-primaryColor = "#2c5e63"
-backgroundColor = "#F8F9FA"
-secondaryBackgroundColor = "#F1F3F5"
-textColor = "#1E293B"
-borderColor = "#E2E8F0"
-dataframeBorderColor = "#E2E8F0"
-dataframeHeaderBackgroundColor = "#F1F3F5"
-dataframeHeaderTextColor = "#475569"
-linkColor = "#2c5e63"
+primaryColor = "#578550"
+backgroundColor = "#f7f5fb"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#21273f"
+borderColor = "#eceaf2"
+dataframeBorderColor = "#eceaf2"
+dataframeHeaderBackgroundColor = "#fdfdfd"
+dataframeHeaderTextColor = "#7e7d91"
+linkColor = "#446a3f"
 showWidgetBorder = true
-baseRadius = "6px"
-buttonRadius = "6px"
-font = "Inter, 'Segoe UI', system-ui, sans-serif"
+baseRadius = "8px"
+buttonRadius = "8px"
+font = "Inter, system-ui, sans-serif"
 headingFontWeights = [600, 600, 600, 600, 600, 600]
-headingFontSizes = ["1.6rem", "1.2rem", "1.05rem", "1rem", "0.95rem", "0.9rem"]
-metricValueFontWeight = 600
-chartCategoricalColors = ["#2c5e63", "#6aa6aa", "#475569", "#7b8799", "#a9b3c1"]
+headingFontSizes = ["1.4rem", "1.1rem", "1rem", "0.95rem", "0.9rem", "0.85rem"]
+metricValueFontWeight = 500
+chartCategoricalColors = ["#446a3f", "#92b68c", "#54586b", "#7e7d91", "#a9a7b8"]
 
-redColor = "#EF4444"
-redTextColor = "#B91C1C"
-redBackgroundColor = "#FEE2E2"
-orangeColor = "#F59E0B"
-orangeTextColor = "#B45309"
-orangeBackgroundColor = "#FEF3C7"
-greenColor = "#10B981"
-greenTextColor = "#047857"
-greenBackgroundColor = "#D1FAE5"
-grayTextColor = "#475569"
-grayBackgroundColor = "#E2E8F0"
+redColor = "#d64545"
+redTextColor = "#b42318"
+redBackgroundColor = "#fdecea"
+orangeColor = "#e0a020"
+orangeTextColor = "#9a5b00"
+orangeBackgroundColor = "#fdf3dc"
+greenColor = "#578550"
+greenTextColor = "#35522f"
+greenBackgroundColor = "#edf3ef"
+grayTextColor = "#54586b"
+grayBackgroundColor = "#f0f0f3"
 
 [[theme.fontFaces]]
 family = "Inter"

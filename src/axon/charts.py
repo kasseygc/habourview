@@ -1,11 +1,10 @@
 """Altair (Vega-Lite) charts shared by the dashboard, the agent and the funder report.
 
-Hybrid clinical palette, validated with the dataviz skill's checker against the #F8F9FA surface:
-- data marks use the brand teals: dark #2c5e63 for the main series, light #6aa6aa for the second
-  (admissions vs discharges; 'relapse reported' next to 'engaged'). Known outcomes are teal.
-- every 'no known outcome' category uses one slate ordered ramp, so the unknown share reads as unknown.
+Axon Health's palette (read from axonhealth.io), checked with the dataviz skill's validator on white:
+- known outcomes in sage: dark #446a3f (completed, engaged), light #92b68c (left by choice, relapse);
+- everything we don't know, or that isn't a completion, in one lavender-grey ordered ramp;
 - red / amber / green are status colours and never appear as data series.
-Light teal is 2.6:1 on the surface, so charts that use it ship with labels or a table.
+Light sage is 2.3:1 on white, so every chart that uses it carries counts in its legend or a table.
 """
 
 from __future__ import annotations
@@ -17,24 +16,35 @@ from axon.agent.registry import DIMENSIONS, METRICS
 from axon.agent.spec import QuerySpec
 from axon.metrics.outcomes import OUTCOME_LABELS
 
-TEAL = "#2c5e63"
-TEAL_LIGHT = "#6aa6aa"
-MUTED = "#94A3B8"     # reference lines
-INK = "#1E293B"
-INK_2 = "#475569"     # axis and label text
-GRID = "#E9EDF2"
-FONT = "Inter, Segoe UI, system-ui, sans-serif"
-BLUE, ORANGE = TEAL, TEAL_LIGHT
+SAGE = "#446a3f"
+SAGE_LIGHT = "#92b68c"
+GREY_1, GREY_2, GREY_3 = "#54586b", "#7e7d91", "#a9a7b8"
+MUTED = GREY_3        # reference lines
+INK = "#21273f"
+INK_2 = "#54586b"     # axis and label text
+GRID = "#f0f0f3"
+FONT = "Inter, system-ui, sans-serif"
+TEAL, TEAL_LIGHT = SAGE, SAGE_LIGHT  # names used by older call sites
+BLUE, ORANGE = SAGE, SAGE_LIGHT
 OUTCOME_COLORS = {
-    "Engaged in recovery": TEAL,
-    "Relapse reported": TEAL_LIGHT,
-    # Ordered slate ramp: tried and failed -> unknown -> never recorded.
-    "Lost to follow-up": "#475569",
-    "Unknown": "#7b8799",
-    "Due but not recorded": "#a9b3c1",
+    "Engaged in recovery": SAGE,
+    "Relapse reported": SAGE_LIGHT,
+    # Ordered grey ramp: tried and failed -> unknown -> never recorded.
+    "Lost to follow-up": GREY_1,
+    "Unknown": GREY_2,
+    "Due but not recorded": GREY_3,
 }
 OUTCOME_ORDER = list(OUTCOME_COLORS)
 GROUP_LABELS = {"completed": "Completed the program", "early_leaver": "Left early"}
+EXIT_COLORS = {
+    "completed": ("Completed", SAGE),
+    "left_by_choice": ("Left by choice", SAGE_LIGHT),
+    "discharged_by_house": ("Discharged by the house", GREY_1),
+    "transferred": ("Transferred", GREY_2),
+    "custody": ("Custody", GREY_3),
+    "other_or_unknown": ("Other or unknown", GREY_3),
+    "still_in_program": ("Still in the program", "#ffffff"),
+}
 
 BAR = {"cornerRadiusEnd": 4}
 WIDTH = "container"
@@ -49,7 +59,7 @@ def _fit(chart):
     return (
         chart.properties(autosize=alt.AutoSizeParams(type="fit-x", contains="padding"), padding={"top": 8, "bottom": 8, "left": 4, "right": 12})
         .configure(background="transparent", font=FONT)
-        .configure_axis(labelColor=INK_2, titleColor=INK_2, gridColor=GRID, domainColor="#CBD5E1", tickColor="#CBD5E1",
+        .configure_axis(labelColor=INK_2, titleColor=INK_2, gridColor=GRID, domainColor="#d7d5e0", tickColor="#d7d5e0",
                         labelFontSize=12, titleFontSize=12, titleFontWeight=500, titlePadding=10, labelPadding=6)
         .configure_legend(labelColor=INK_2, labelFontSize=12, symbolSize=120, rowPadding=8, columnPadding=16, padding=10)
         .configure_view(stroke=None)
@@ -162,7 +172,7 @@ def outcomes_chart(counts_by_group: pd.DataFrame, group_col: str | None = None, 
     df["Group label"] = df["Group"] + " (n=" + totals.astype(int).astype(str) + ")"
     chart = (
         _base(df)
-        .mark_bar(stroke="#F8F9FA", strokeWidth=2)
+        .mark_bar(stroke="#ffffff", strokeWidth=2)
         .encode(
             y=alt.Y("Group label:N", title=None, axis=alt.Axis(labelLimit=260)),
             x=alt.X("share:Q", title="Share of everyone due", axis=alt.Axis(format=".0%", tickCount=5), stack="zero", scale=alt.Scale(domain=[0, 1])),
@@ -220,10 +230,10 @@ def _agent_chart(spec: QuerySpec, df: pd.DataFrame) -> alt.Chart | None:
             tooltip=[alt.Tooltip(f"{x}:O", title=DIMENSIONS[x].label), alt.Tooltip(f"{value}:Q", title=m.label)],
         )
     if color:
-        return _base(df).mark_bar(stroke="#F8F9FA", strokeWidth=2).encode(
+        return _base(df).mark_bar(stroke="#ffffff", strokeWidth=2).encode(
             x=alt.X(f"{x}:O", title=DIMENSIONS[x].label), y=alt.Y(f"{value}:Q", title=m.label, stack="zero"),
             color=alt.Color(f"{color}:N", title=DIMENSIONS[color].label,
-                            scale=alt.Scale(range=[TEAL, TEAL_LIGHT, "#475569", "#a9b3c1"]), legend=alt.Legend(orient="bottom")),
+                            scale=alt.Scale(range=[SAGE, SAGE_LIGHT, GREY_1, GREY_3]), legend=alt.Legend(orient="bottom")),
             tooltip=[f"{x}:O", f"{color}:N", alt.Tooltip(f"{value}:Q", title=m.label)],
         )
     return _simple_bar(df, x, value, m.label, pct=False)
@@ -256,9 +266,36 @@ def _engaged_range_chart(df: pd.DataFrame, group: str | None) -> alt.Chart:
     base = _base(d).encode(y=alt.Y("Group:N", title=None, axis=alt.Axis(labelLimit=260)))
     tooltip = [alt.Tooltip("Group:N"), alt.Tooltip("confirmed:Q", title="Confirmed engaged (worst case)", format=".0%"),
                alt.Tooltip("best:Q", title="Best case", format=".0%"), alt.Tooltip("no_outcome:Q", title="No known outcome")]
-    best = base.mark_bar(color="#C9DEDF", **BAR).encode(
+    best = base.mark_bar(color="#d8e6da", **BAR).encode(
         x=alt.X("best:Q", title="Engaged in recovery, share of everyone due", axis=alt.Axis(format=".0%", tickCount=5), scale=alt.Scale(domain=[0, 1])),
         tooltip=tooltip,
     )
     confirmed = base.mark_bar(color=BLUE).encode(x="confirmed:Q", tooltip=tooltip)
     return (best + confirmed).properties(height=40 + 40 * len(d))
+
+
+def share_bar(parts: list[tuple[str, int, str]], height: int = 30) -> alt.Chart:
+    """One horizontal part-to-whole bar. parts: (label, count, colour) in order. Legend is drawn in HTML."""
+    total = sum(n for _, n, _ in parts) or 1
+    df = pd.DataFrame([{"label": l, "n": n, "share": n / total, "order": i, "color": c}
+                       for i, (l, n, c) in enumerate(parts) if n])
+    return _fit(
+        alt.Chart(df).mark_bar(stroke="#d7d5e0", strokeWidth=1).encode(
+            x=alt.X("share:Q", stack="zero", axis=None, scale=alt.Scale(domain=[0, 1])),
+            color=alt.Color("color:N", scale=None, legend=None),
+            order=alt.Order("order:Q"),
+            tooltip=[alt.Tooltip("label:N", title=" "), alt.Tooltip("n:Q", title="People"),
+                     alt.Tooltip("share:Q", title="Share", format=".0%")],
+        ).properties(width=WIDTH, height=height)
+    )
+
+
+def share_legend(parts: list[tuple[str, int, str]]) -> str:
+    """Dots with labels and counts, so identity never depends on colour alone."""
+    items = "".join(
+        f'<span style="display:inline-flex;align-items:center;gap:.4rem;margin:0 1.1rem .35rem 0;white-space:nowrap">'
+        f'<span style="width:9px;height:9px;border-radius:50%;background:{c};border:1px solid #d7d5e0"></span>'
+        f'{l} <b style="font-weight:600">{n}</b></span>'
+        for l, n, c in parts
+    )
+    return f'<div style="color:{INK_2};font-size:.86rem;line-height:1.5;margin:.15rem 0 .25rem">{items}</div>'
