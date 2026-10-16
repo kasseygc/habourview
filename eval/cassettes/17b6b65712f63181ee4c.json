@@ -1,0 +1,11 @@
+{
+  "key": "17b6b65712f63181ee4c",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "How are our graduates doing?",
+  "response_text": "{\"action\": \"clarify\",\"spec\": null,\"unclear_terms\": [\"doing\"],\"candidate_metrics\": [\"followup_engaged_rate\",\"followup_outcomes\"],\"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2440,
+  "output_tokens": 45,
+  "recorded_at": "2026-10-16T02:49:16+00:00"
+}

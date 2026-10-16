@@ -1,0 +1,11 @@
+{
+  "key": "d830d315f223b143870e",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Of the referrals we didn't admit, how many are still open according to the staff notes?",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"referrals_by_note\", \"group_by\": [\"note_referral_state\"], \"filters\": [{\"field\": \"note_referral_state\", \"op\": \"in\", \"values\": [\"open\"]}], \"time_window\": {\"preset\": \"all\", \"start\": null, \"end\": null}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2454,
+  "output_tokens": 109,
+  "recorded_at": "2026-10-16T02:48:33+00:00"
+}

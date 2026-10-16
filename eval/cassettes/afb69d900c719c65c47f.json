@@ -1,0 +1,11 @@
+{
+  "key": "afb69d900c719c65c47f",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Where did people go after leaving the house?",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"discharges\", \"group_by\": [\"destination\"], \"filters\": [], \"time_window\": {\"preset\": \"all\", \"start\": null, \"end\": null}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2443,
+  "output_tokens": 77,
+  "recorded_at": "2026-10-16T02:48:52+00:00"
+}

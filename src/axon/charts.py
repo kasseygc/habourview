@@ -88,7 +88,10 @@ def occupancy_chart(monthly: pd.DataFrame, color: str = "#2a78d6") -> alt.Chart:
     )
     x = alt.X("month:T", title=None,
               axis=alt.Axis(format="%b", tickCount={"interval": "month", "step": 1}, labelAngle=0, labelOverlap="greedy"))
-    y = alt.Y("occupancy_rate:Q", title=None, axis=alt.Axis(format="%", tickCount=5), scale=alt.Scale(domain=[0, 1.05]))
+    # Zoom to where the variation is (a line chart needn't start at zero); the axis says where it starts.
+    low = max(0.0, (int(df["occupancy_rate"].min() * 10) - 1) / 10)
+    y = alt.Y("occupancy_rate:Q", title=None, axis=alt.Axis(format="%", tickCount=6),
+              scale=alt.Scale(domain=[low, 1.02], clamp=True))
     tip = [
         alt.Tooltip("month_label:N", title="Month"),
         alt.Tooltip("occupancy_rate:Q", title="Beds filled", format=".1%"),
@@ -96,13 +99,13 @@ def occupancy_chart(monthly: pd.DataFrame, color: str = "#2a78d6") -> alt.Chart:
         alt.Tooltip("peak_residents:Q", title="Busiest night"),
         alt.Tooltip("note:N", title=" "),
     ]
-    area = _base(df).mark_area(color=color, opacity=0.12).encode(x=x, y=y)
+    area = _base(df).mark_area(fill=color, fillOpacity=0.12, stroke=None).encode(x=x, y=y, y2=alt.datum(low))
     line = _base(df).mark_line(color=color, strokeWidth=2.5,
                                point=alt.OverlayMarkDef(size=70, filled=True, color=color)).encode(x=x, y=y, tooltip=tip)
     full = alt.Chart(pd.DataFrame({"y": [1.0], "t": ["all beds full"]}))
     rule = full.mark_rule(color=MUTED, strokeDash=[4, 4]).encode(y="y:Q")
     text = full.mark_text(align="left", dx=4, dy=-7, color=INK_2, fontSize=11).encode(y="y:Q", x=alt.value(0), text="t:N")
-    return _fit((area + rule + text + line).properties(height=230))
+    return _fit((area + rule + text + line).properties(height=340))
 
 
 def census_chart(census: pd.DataFrame) -> alt.Chart:

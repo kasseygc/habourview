@@ -1,0 +1,11 @@
+{
+  "key": "eff045cb4d938bba40a6",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Compare our occupancy with the other houses Axon serves.",
+  "response_text": "{\"action\": \"decline\", \"spec\": null, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": \"other_house\"}",
+  "stop_reason": "stop",
+  "input_tokens": 2445,
+  "output_tokens": 37,
+  "recorded_at": "2026-10-16T02:49:44+00:00"
+}

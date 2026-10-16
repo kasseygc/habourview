@@ -1,0 +1,11 @@
+{
+  "key": "404e8140379eb769b7c7",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Why didn't referrals in 2025 end up being admitted?",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"referrals_by_note\", \"group_by\": [\"note_referral\"], \"filters\": [{\"field\": \"note_referral_state\", \"op\": \"not_in\", \"values\": [\"open\"]}], \"time_window\": {\"preset\": \"fy2025\", \"start\": null, \"end\": null}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2450,
+  "output_tokens": 113,
+  "recorded_at": "2026-10-16T02:48:41+00:00"
+}
