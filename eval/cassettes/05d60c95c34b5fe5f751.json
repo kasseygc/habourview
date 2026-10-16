@@ -1,0 +1,11 @@
+{
+  "key": "05d60c95c34b5fe5f751",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Predict who is likely to self-discharge next month.",
+  "response_text": "{\"action\":\"decline\",\"spec\":null,\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":\"out_of_scope\"}",
+  "stop_reason": "stop",
+  "input_tokens": 3333,
+  "output_tokens": 33,
+  "recorded_at": "2026-10-16T05:47:19+00:00"
+}

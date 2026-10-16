@@ -1,0 +1,11 @@
+{
+  "key": "9e9c26483eea68c07cb6",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Transfers out to other programs by month in 2025",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"discharges\",\"group_by\":[\"month\"],\"filters\":[{\"field\":\"discharge_reason\",\"op\":\"in\",\"values\":[\"transfer\"]}],\"time_window\":{\"preset\":\"fy2025\",\"start\":null,\"end\":null},\"chart\":\"bar\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 3336,
+  "output_tokens": 79,
+  "recorded_at": "2026-10-16T05:41:26+00:00"
+}

@@ -1,0 +1,11 @@
+{
+  "key": "b2bfc6a99c4bc91cdbd6",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Engaged in recovery at 6 months, waived fee versus paid fee",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"followup_engaged_rate\",\"group_by\":[\"fee_status\"],\"filters\":[{\"field\":\"horizon\",\"op\":\"in\",\"values\":[\"6m\"]}],\"time_window\":{\"preset\":\"all\",\"start\":null,\"end\":null},\"chart\":\"bar\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 3336,
+  "output_tokens": 80,
+  "recorded_at": "2026-10-16T05:44:34+00:00"
+}

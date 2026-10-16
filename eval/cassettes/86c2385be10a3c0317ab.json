@@ -1,0 +1,11 @@
+{
+  "key": "86c2385be10a3c0317ab",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "What do the staff notes say about cravings?",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"notes_mentions\",\"group_by\":[\"note_topic\",\"note_field\"],\"filters\":[{\"field\":\"note_topic\",\"op\":\"in\",\"values\":[\"cravings\"]}],\"time_window\":{\"preset\":\"all\",\"start\":null,\"end\":null},\"chart\":\"table\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 3331,
+  "output_tokens": 84,
+  "recorded_at": "2026-10-16T05:47:28+00:00"
+}

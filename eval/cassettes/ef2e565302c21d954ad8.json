@@ -1,0 +1,11 @@
+{
+  "key": "ef2e565302c21d954ad8",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "How many people completed the program in each fiscal year?",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"discharges\",\"group_by\":[\"fiscal_year\"],\"filters\":[{\"field\":\"discharge_reason\",\"op\":\"in\",\"values\":[\"completed\"]}],\"time_window\":{\"preset\":\"all\",\"start\":null,\"end\":null},\"chart\":\"bar\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 3333,
+  "output_tokens": 77,
+  "recorded_at": "2026-10-16T05:41:36+00:00"
+}

@@ -1,0 +1,11 @@
+{
+  "key": "0f403f4de90f6701a673",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Intake assessments per month in FY2024",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"intakes\",\"group_by\":[\"month\"],\"filters\":[],\"time_window\":{\"preset\":\"fy2024\",\"start\":null,\"end\":null},\"chart\":\"bar\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 3333,
+  "output_tokens": 65,
+  "recorded_at": "2026-10-16T05:41:10+00:00"
+}

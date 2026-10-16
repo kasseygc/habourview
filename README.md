@@ -86,12 +86,12 @@ say about a topic: a count and the notes' own redacted phrases, never who.
 | Check | Result |
 |---|---|
 | Questions: unsafe answers (must be 0) | 0 of 48 |
-| Questions: right kind of reply (answer, ask, decline) | ACTION |
-| Questions: same numbers as the expected answer (strict) | EXEC |
-| Questions: states the expected headline number (lenient) | HEADLINE |
+| Questions: right kind of reply (answer, ask, decline) | 98% |
+| Questions: same numbers as the expected answer (strict) | 71% |
+| Questions: states the expected headline number (lenient) | 85% |
 | Staff notes: findings found, precision | 94%, 91% (70 labelled notes) |
 | Name redaction: names caught, false alarms | 33 of 34, none (43 labelled sentences) |
-| Automated tests | TESTS passing |
+| Automated tests | 194 passing |
 
 The questions run on a 12B model on a laptop. Its misses are wrong groupings or filters, for example
 splitting a total by month when nobody asked; never invented numbers, and never an unsafe answer.

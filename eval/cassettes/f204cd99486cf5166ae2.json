@@ -1,0 +1,11 @@
+{
+  "key": "f204cd99486cf5166ae2",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "How many people who left in 2025 stayed between 30 and 90 days?",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"discharges\",\"group_by\":[],\"filters\":[{\"field\":\"discharge_reason\",\"op\":\"in\",\"values\":[\"completed\",\"self_discharge\",\"administrative\",\"transfer\",\"other\",\"not_recorded\"]},{\"field\":\"length_of_stay_days\",\"op\":\"between\",\"values\":[30,90]}],\"time_window\":{\"preset\":\"fy2025\",\"start\":null,\"end\":null},\"chart\":\"bar\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 3344,
+  "output_tokens": 114,
+  "recorded_at": "2026-10-16T05:46:26+00:00"
+}

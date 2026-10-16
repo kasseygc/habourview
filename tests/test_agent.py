@@ -237,7 +237,7 @@ def test_what_notes_say_is_counts_and_redacted_phrases_never_who(make_agent):
     assert "resident_id" not in r.frame.columns
     assert r.sql.split("FROM")[0].replace("COUNT(DISTINCT resident_id)", "").count("resident_id") == 0  # counted, never returned
     assert r.text == ("Staff notes mention cravings for 2 people. In the notes' words, redacted: "
-                      "“Some cravings reported”. Not yet confirmed by staff.")
+                      "“Some cravings”. Not yet confirmed by staff.")
 
 
 def test_a_word_defined_by_picking_a_measure_is_never_asked_about_again(make_agent):

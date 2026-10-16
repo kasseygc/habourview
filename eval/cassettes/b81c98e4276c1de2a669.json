@@ -1,0 +1,11 @@
+{
+  "key": "b81c98e4276c1de2a669",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Occupancy by quarter",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"occupancy\",\"group_by\":[\"quarter\"],\"filters\":[],\"time_window\":{\"preset\":\"all\",\"start\":null,\"end\":null},\"chart\":\"bar\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 3326,
+  "output_tokens": 61,
+  "recorded_at": "2026-10-16T05:42:42+00:00"
+}

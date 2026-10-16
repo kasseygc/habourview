@@ -1,0 +1,11 @@
+{
+  "key": "f481d28641dc6a6a7c10",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "What was bed occupancy from March to June 2025, month by month?",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"occupancy\",\"group_by\":[\"month\"],\"filters\":[],\"time_window\":{\"preset\":\"custom\",\"start\":\"2025-03-01\",\"end\":\"2025-06-30\"},\"chart\":\"line\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 3340,
+  "output_tokens": 80,
+  "recorded_at": "2026-10-16T05:42:53+00:00"
+}
