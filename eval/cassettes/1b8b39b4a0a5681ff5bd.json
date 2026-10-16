@@ -1,0 +1,11 @@
+{
+  "key": "1b8b39b4a0a5681ff5bd",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "How many admissions in 2025 had the entrance fee waived?",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"admissions\",\"group_by\":[\"month\"],\"filters\":[{\"field\":\"fee_status\",\"op\":\"in\",\"values\":[\"waived\"]}],\"time_window\":{\"preset\":\"fy2025\",\"start\":null,\"end\":null},\"chart\":\"bar\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 2449,
+  "output_tokens": 80,
+  "recorded_at": "2026-10-16T02:44:31+00:00"
+}

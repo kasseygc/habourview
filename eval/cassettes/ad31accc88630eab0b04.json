@@ -1,0 +1,11 @@
+{
+  "key": "ad31accc88630eab0b04",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "how many in the house on 11 october 2025?\n\n(A previous reply was rejected by the validator: 1 validation error for LLMReply\nspec\n  Value error, residents_now is a point-in-time count; use time_window preset 'all' [type=value_error, input_value={'metric': 'residents_now...10-11'}, 'chart': 'bar'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error. Reply again, using only catalogue ids allowed for the chosen metric.)",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"residents_now\", \"group_by\": [], \"filters\": [], \"time_window\": {\"preset\": \"all\", \"start\": null, \"end\": null}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2572,
+  "output_tokens": 76,
+  "recorded_at": "2026-10-16T02:43:48+00:00"
+}

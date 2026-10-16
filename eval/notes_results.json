@@ -1,7 +1,8 @@
 {
-  "model": "claude-opus-5-5",
-  "mode": "replay",
+  "model": "gemma3:12b",
+  "mode": "record",
   "cases": 70,
+  "file_cases": 47,
   "systems": {
     "rules": {
       "file": {
@@ -178,10 +179,399 @@
           "f1": 0.8750000000000001
         }
       }
+    },
+    "model": {
+      "file": {
+        "overall": {
+          "tp": 37,
+          "fp": 2,
+          "fn": 13,
+          "precision": 0.9487179487179487,
+          "recall": 0.74,
+          "f1": 0.8314606741573033
+        },
+        "referral": {
+          "tp": 12,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.9230769230769231,
+          "recall": 1.0,
+          "f1": 0.9600000000000001
+        },
+        "discharge": {
+          "tp": 10,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.7692307692307693,
+          "f1": 0.8695652173913044
+        },
+        "risk": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "engagement": {
+          "tp": 11,
+          "fp": 0,
+          "fn": 5,
+          "precision": 1.0,
+          "recall": 0.6875,
+          "f1": 0.8148148148148148
+        },
+        "passes": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "destination": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 5,
+          "precision": 0.5,
+          "recall": 0.16666666666666666,
+          "f1": 0.25
+        }
+      },
+      "varied": {
+        "overall": {
+          "tp": 23,
+          "fp": 1,
+          "fn": 6,
+          "precision": 0.9583333333333334,
+          "recall": 0.7931034482758621,
+          "f1": 0.8679245283018867
+        },
+        "referral": {
+          "tp": 6,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "discharge": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "risk": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "engagement": {
+          "tp": 7,
+          "fp": 1,
+          "fn": 3,
+          "precision": 0.875,
+          "recall": 0.7,
+          "f1": 0.7777777777777777
+        },
+        "passes": {
+          "tp": 4,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "destination": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5
+        }
+      },
+      "all": {
+        "overall": {
+          "tp": 60,
+          "fp": 3,
+          "fn": 19,
+          "precision": 0.9523809523809523,
+          "recall": 0.759493670886076,
+          "f1": 0.8450704225352113
+        },
+        "referral": {
+          "tp": 18,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.9473684210526315,
+          "recall": 1.0,
+          "f1": 0.972972972972973
+        },
+        "discharge": {
+          "tp": 12,
+          "fp": 0,
+          "fn": 4,
+          "precision": 1.0,
+          "recall": 0.75,
+          "f1": 0.8571428571428571
+        },
+        "risk": {
+          "tp": 6,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "engagement": {
+          "tp": 18,
+          "fp": 1,
+          "fn": 8,
+          "precision": 0.9473684210526315,
+          "recall": 0.6923076923076923,
+          "f1": 0.7999999999999999
+        },
+        "passes": {
+          "tp": 4,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "destination": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 7,
+          "precision": 0.6666666666666666,
+          "recall": 0.2222222222222222,
+          "f1": 0.3333333333333333
+        }
+      }
+    },
+    "rules + model": {
+      "file": {
+        "overall": {
+          "tp": 50,
+          "fp": 2,
+          "fn": 0,
+          "precision": 0.9615384615384616,
+          "recall": 1.0,
+          "f1": 0.9803921568627451
+        },
+        "referral": {
+          "tp": 12,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.9230769230769231,
+          "recall": 1.0,
+          "f1": 0.9600000000000001
+        },
+        "discharge": {
+          "tp": 13,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "risk": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "engagement": {
+          "tp": 16,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "passes": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "destination": {
+          "tp": 6,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.8571428571428571,
+          "recall": 1.0,
+          "f1": 0.923076923076923
+        }
+      },
+      "varied": {
+        "overall": {
+          "tp": 24,
+          "fp": 2,
+          "fn": 5,
+          "precision": 0.9230769230769231,
+          "recall": 0.8275862068965517,
+          "f1": 0.8727272727272727
+        },
+        "referral": {
+          "tp": 6,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "discharge": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "risk": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "engagement": {
+          "tp": 8,
+          "fp": 1,
+          "fn": 2,
+          "precision": 0.8888888888888888,
+          "recall": 0.8,
+          "f1": 0.8421052631578948
+        },
+        "passes": {
+          "tp": 4,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.8,
+          "recall": 1.0,
+          "f1": 0.888888888888889
+        },
+        "destination": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5
+        }
+      },
+      "all": {
+        "overall": {
+          "tp": 74,
+          "fp": 4,
+          "fn": 5,
+          "precision": 0.9487179487179487,
+          "recall": 0.9367088607594937,
+          "f1": 0.9426751592356688
+        },
+        "referral": {
+          "tp": 18,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.9473684210526315,
+          "recall": 1.0,
+          "f1": 0.972972972972973
+        },
+        "discharge": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.9375,
+          "f1": 0.967741935483871
+        },
+        "risk": {
+          "tp": 6,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "engagement": {
+          "tp": 24,
+          "fp": 1,
+          "fn": 2,
+          "precision": 0.96,
+          "recall": 0.9230769230769231,
+          "f1": 0.9411764705882353
+        },
+        "passes": {
+          "tp": 4,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.8,
+          "recall": 1.0,
+          "f1": 0.888888888888889
+        },
+        "destination": {
+          "tp": 7,
+          "fp": 1,
+          "fn": 2,
+          "precision": 0.875,
+          "recall": 0.7777777777777778,
+          "f1": 0.823529411764706
+        }
+      }
     }
   },
-  "rejected_quotes": 0,
-  "rejected_examples": [],
+  "rejected_quotes": 6,
+  "rejected_examples": [
+    {
+      "field": "destination",
+      "value": "moved_region",
+      "quote": "Moved to program in home region.",
+      "id": "g023",
+      "problem": "value does not belong to the field"
+    },
+    {
+      "field": "discharge",
+      "value": "unreachable",
+      "quote": "Discharged - see paper file",
+      "id": "g026",
+      "problem": "value does not belong to the field"
+    },
+    {
+      "field": "discharge",
+      "value": "not_appropriate",
+      "quote": "Spoke w/ probation officer [NAME] re: conditions.",
+      "id": "g037",
+      "problem": "value does not belong to the field"
+    },
+    {
+      "field": "engagement",
+      "value": "not_appropriate",
+      "quote": "Res. asked staff to update emerg contact to brother [NAME] [PHONE].",
+      "id": "g041",
+      "problem": "value does not belong to the field"
+    },
+    {
+      "field": "risk",
+      "value": "not_appropriate",
+      "quote": "new admit - orientation done, house rules signed",
+      "id": "g045",
+      "problem": "value does not belong to the field"
+    }
+  ],
+  "rules_model_disagree": 29,
   "misses": {
     "rules": [
       {
@@ -380,6 +770,296 @@
           ]
         ],
         "extra": []
+      }
+    ],
+    "model": [
+      {
+        "note": "Graduated. Volunteers at house occasionally.",
+        "missed": [],
+        "extra": [
+          [
+            "destination",
+            "home_or_family"
+          ]
+        ]
+      },
+      {
+        "note": "Left AMA after conflict w/ peer.",
+        "missed": [
+          [
+            "discharge",
+            "peer_conflict"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Self-discharged. Stated wanted to go home.",
+        "missed": [
+          [
+            "destination",
+            "home_or_family"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "DISCHARGED FOR REPEATED RULE VIOLATIONS (USE ON PREMISES).",
+        "missed": [
+          [
+            "discharge",
+            "rule_violations"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "aftercare check-in by phone - doing well, employed",
+        "missed": [
+          [
+            "engagement",
+            "aftercare_attending"
+          ],
+          [
+            "engagement",
+            "work"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Moved to program in home region.",
+        "missed": [
+          [
+            "destination",
+            "another_program"
+          ],
+          [
+            "discharge",
+            "moved_region"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "transferred to higher level of care (detox)",
+        "missed": [
+          [
+            "destination",
+            "detox"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Incarcerated - outstanding warrant",
+        "missed": [
+          [
+            "destination",
+            "custody"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "started part-time job search, good engagement in groups",
+        "missed": [
+          [
+            "engagement",
+            "attending_groups"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Res. settling in, attending all groups. Some cravings reported.",
+        "missed": [
+          [
+            "engagement",
+            "attending_groups"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Transferred to hospital for medical care.",
+        "missed": [
+          [
+            "destination",
+            "hospital"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Mom ([NAME]) called asking about visiting hrs, call back [PHONE].",
+        "missed": [],
+        "extra": [
+          [
+            "referral",
+            "unreachable"
+          ]
+        ]
+      },
+      {
+        "note": "doing well. sponsor identified",
+        "missed": [
+          [
+            "engagement",
+            "doing_well"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Tearful in group, says she feels hopeless lately. Booked w/ counsellor.",
+        "missed": [],
+        "extra": [
+          [
+            "engagement",
+            "attending_groups"
+          ]
+        ]
+      },
+      {
+        "note": "Sent to ER, admitted to the medical ward.",
+        "missed": [
+          [
+            "destination",
+            "hospital"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Picked up by police on an old warrant.",
+        "missed": [
+          [
+            "destination",
+            "custody"
+          ],
+          [
+            "discharge",
+            "incarceration"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Hasn't come to aftercare in a month, not returning calls.",
+        "missed": [
+          [
+            "engagement",
+            "aftercare_missed"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Spoke at the alumni dinner, doing great.",
+        "missed": [
+          [
+            "engagement",
+            "alumni_involved"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Res. back from weekend pass, appears well, attending NA 3x/wk",
+        "missed": [
+          [
+            "engagement",
+            "doing_well"
+          ]
+        ],
+        "extra": []
+      }
+    ],
+    "rules + model": [
+      {
+        "note": "Graduated. Volunteers at house occasionally.",
+        "missed": [],
+        "extra": [
+          [
+            "destination",
+            "home_or_family"
+          ]
+        ]
+      },
+      {
+        "note": "Mom ([NAME]) called asking about visiting hrs, call back [PHONE].",
+        "missed": [],
+        "extra": [
+          [
+            "referral",
+            "unreachable"
+          ]
+        ]
+      },
+      {
+        "note": "Tearful in group, says she feels hopeless lately. Booked w/ counsellor.",
+        "missed": [],
+        "extra": [
+          [
+            "engagement",
+            "attending_groups"
+          ]
+        ]
+      },
+      {
+        "note": "Sent to ER, admitted to the medical ward.",
+        "missed": [
+          [
+            "destination",
+            "hospital"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Picked up by police on an old warrant.",
+        "missed": [
+          [
+            "destination",
+            "custody"
+          ],
+          [
+            "discharge",
+            "incarceration"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Hasn't come to aftercare in a month, not returning calls.",
+        "missed": [
+          [
+            "engagement",
+            "aftercare_missed"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Res. back from weekend pass, appears well, attending NA 3x/wk",
+        "missed": [
+          [
+            "engagement",
+            "doing_well"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Didn't come back from overnight pass; staff left a message.",
+        "missed": [],
+        "extra": [
+          [
+            "passes",
+            "pass_returned"
+          ]
+        ]
       }
     ]
   }

@@ -143,7 +143,8 @@ class Agent:
 
         # 3. The model proposes a spec (or asks, or declines). One retry on an invalid spec.
         schema = llm_json_schema()
-        system = system_blocks(definitions)
+        # Only the definitions for words in this question: a shorter prompt, and stable recordings.
+        system = system_blocks({t: d for t, d in definitions.items() if t in terms})
         user_text = red.text
         reply = None
         error = None

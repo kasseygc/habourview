@@ -1,0 +1,11 @@
+{
+  "key": "e3c884c7864bc5399ac1",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "How full was the house each month in 2025?",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"occupancy\",\"group_by\":[\"month\"],\"filters\":[],\"time_window\":{\"preset\":\"fy2025\",\"start\":null,\"end\":null},\"chart\":\"bar\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 2448,
+  "output_tokens": 65,
+  "recorded_at": "2026-10-16T02:41:30+00:00"
+}

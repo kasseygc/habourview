@@ -1,13 +1,17 @@
-"""Harbourview analytics: one view for the director and funders, plus questions and staff notes.
+"""Harbourview analytics: one visual view for the director and funders, plus questions.
 
     uv run streamlit run app/streamlit_app.py
 """
 
 from __future__ import annotations
 
+import threading
+
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
+
+import ui
 
 load_dotenv()
 
@@ -15,48 +19,22 @@ from axon.agent.definitions import DefinitionStore  # noqa: E402
 from axon.agent.glossary import GLOSSARY  # noqa: E402
 from axon.agent.llm import model_reachable, resolve_mode  # noqa: E402
 from axon.agent.pipeline import Agent, Answer, Clarification, Session  # noqa: E402
-from axon.charts import EXIT_COLORS, OUTCOME_COLORS, agent_chart, occupancy_chart, share_bar, share_legend  # noqa: E402
+from axon.charts import agent_chart, occupancy_chart  # noqa: E402
 from axon.config import MATURITY_DAYS, FiscalYear  # noqa: E402
 from axon.metrics.funnel import funnel  # noqa: E402
 from axon.metrics.occupancy import monthly_occupancy  # noqa: E402
-from axon.metrics.outcomes import OUTCOME_LABELS, outcomes  # noqa: E402
+from axon.metrics.outcomes import outcomes  # noqa: E402
 from axon.metrics.stays import stays  # noqa: E402
 from axon.notes.review import ReviewStore  # noqa: E402
 from axon.notes.schema import NOTES_DISCLOSURE, label  # noqa: E402
-from axon.report.funder import render_html  # noqa: E402
-from axon.status import STATUS_ICON, board  # noqa: E402
 from axon.notes.summary import headline, summarize as summarize_notes  # noqa: E402
+from axon.report.funder import render_html  # noqa: E402
+from axon.status import board  # noqa: E402
 from axon.tenants import TENANTS, get_tenant  # noqa: E402
 from axon.warehouse import build_all, load  # noqa: E402
 
 st.set_page_config(page_title="Harbourview analytics", layout="wide", initial_sidebar_state="collapsed")
-st.markdown(
-    """
-    <style>
-    .block-container { max-width: 1180px; padding-top: 2.6rem; padding-bottom: 3rem; }
-    [data-testid="stSidebarCollapsedControl"] { display: none; }
-    [data-testid="stMarkdownContainer"] p { line-height: 1.6; }
-    .hdr-name { font-size: 1.3rem; font-weight: 600; color: #030302; margin: 0; }
-    .hdr-meta { color: #54586b; font-size: .85rem; margin: .1rem 0 0; }
-    .lab { font-size: .7rem; letter-spacing: .07em; text-transform: uppercase; color: #7e7d91; }
-    .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: .25rem 0 .9rem; }
-    .tile { background: #fff; border: 1px solid #eceaf2; border-radius: 10px; padding: .8rem 1rem; }
-    .val { font-size: 1.65rem; font-weight: 500; color: #030302; margin-top: .1rem; font-variant-numeric: tabular-nums; }
-    .unit { font-size: .85rem; color: #54586b; font-weight: 400; }
-    .sub { font-size: .8rem; color: #54586b; margin-top: .1rem; }
-    .foot { font-size: .8rem; color: #7e7d91; border-top: 1px solid #f0f0f3; margin-top: .6rem; padding-top: .5rem; }
-    .st-key-strip { background: #fff; border: 1px solid #eceaf2; border-radius: 10px; padding: .7rem .9rem .3rem; margin-bottom: .4rem; }
-    .st-key-strip [data-testid="stColumn"] + [data-testid="stColumn"] { border-left: 1px solid #f0f0f3; padding-left: .9rem; }
-    .k-value { font-size: 1.35rem; font-weight: 500; color: #030302; font-variant-numeric: tabular-nums; line-height: 1.3; }
-    table.t { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; border: 0 !important; }
-    table.t th, table.t td { border: 0 !important; border-bottom: 1px solid #f0f0f3 !important; padding: .45rem .4rem; text-align: left; background: transparent !important; }
-    table.t th { font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; color: #7e7d91; font-weight: 500; }
-    table.t td.r, table.t th.r { text-align: right; }
-    [data-testid="stVerticalBlockBorderWrapper"] { background: #fff; }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+st.markdown(ui.CSS, unsafe_allow_html=True)
 
 EXAMPLES = [
     "How many admissions did we have each month in 2025?",
@@ -64,14 +42,18 @@ EXAMPLES = [
     "What percentage of residents were sober at 6 months?",
     "How many active residents do we have, by phase?",
 ]
-# In production the identity provider sets the house; nothing typed can change it. The generated
-# test house exists only to prove isolation in the tests, so the app shows Harbourview alone.
+# The identity provider sets the house in production. The generated test house exists only for the tests.
 SESSION = Session("harbourview", "director@harbourview")
+FIELD_COLOR = {"referral": ui.BLUE, "discharge": ui.VIOLET, "destination": ui.SAGE, "engagement": ui.SAGE,
+               "risk": ui.ORANGE, "passes": ui.BLUE}
 
 
 @st.cache_resource
 def get_agent() -> Agent:
-    return Agent()
+    agent = Agent()
+    agent.llm.timeout_s = 90  # interactive: fail politely instead of hanging
+    threading.Thread(target=agent.llm.warm_up, daemon=True).start()
+    return agent
 
 
 @st.cache_resource
@@ -86,69 +68,46 @@ def get_warehouse(tenant_id: str):
     return load(get_tenant(tenant_id))
 
 
+def show(html: str) -> None:
+    st.markdown(html, unsafe_allow_html=True)
+
+
 def days(v) -> str:
     return "–" if v is None or pd.isna(v) else f"{v:.0f}"
 
 
-def pct_num(n: int, d: int) -> str:
+def pct(n: int, d: int) -> str:
     return "–" if not d else f"{100 * n / d:.0f}"
-
-
-def tiles(items: list[tuple[str, str, str, str]]) -> None:
-    """(label, value, unit, sub)"""
-    st.markdown('<div class="tiles">' + "".join(
-        f'<div class="tile"><div class="lab">{l}</div><div class="val">{v}<span class="unit">{u}</span></div>'
-        f'<div class="sub">{s}</div></div>' for l, v, u, s in items) + "</div>", unsafe_allow_html=True)
-
-
-def table(headers: list[str], rows: list[list], right_from: int = 1) -> str:
-    th = "".join(f'<th class="{"r" if i >= right_from else ""}">{h}</th>' for i, h in enumerate(headers))
-    tr = "".join("<tr>" + "".join(f'<td class="{"r" if i >= right_from else ""}">{c}</td>' for i, c in enumerate(r)) + "</tr>"
-                 for r in rows)
-    return f'<table class="t"><tr>{th}</tr>{tr}</table>'
-
-
-def card_title(text: str) -> None:
-    st.markdown(f'<div class="lab" style="margin-bottom:.4rem">{text}</div>', unsafe_allow_html=True)
-
-
-def foot(text: str) -> None:
-    st.markdown(f'<div class="foot">{text}</div>', unsafe_allow_html=True)
-
-
-def rng(lo: float | None, hi: float | None) -> str:
-    return "–" if lo is None or hi is None else f"{100 * lo:.0f}–{100 * hi:.0f}"
 
 
 # ---------------------------------------------------------------- header
 ensure_built()
-head, fy_col, export_col = st.columns([6, 1.3, 1.4], vertical_alignment="bottom")
 session = SESSION
-with fy_col:
-    fy = FiscalYear(st.selectbox("Fiscal year", [2025, 2024], format_func=lambda y: f"FY{y}" + (" (Jul–Dec)" if y == 2024 else "")))
+agent = get_agent()
 tenant = get_tenant(session.tenant_id)
 w = get_warehouse(session.tenant_id)
-reviews = ReviewStore()
-decisions = reviews.decisions(session.tenant_id)
+decisions = ReviewStore().decisions(session.tenant_id)
+head, fy_col, export_col = st.columns([6, 1.3, 1.3], vertical_alignment="bottom")
+with fy_col:
+    fy = FiscalYear(st.selectbox("Fiscal year", [2025, 2024], format_func=lambda y: f"FY{y}" + (" (Jul–Dec)" if y == 2024 else "")))
 with head:
-    st.markdown(f'<p class="hdr-name">{tenant.name}</p><p class="hdr-meta">Data as of {w.as_of:%d %b %Y} · '
-                f'January–December fiscal year · synthetic data</p>', unsafe_allow_html=True)
+    show(f'<p class="hdr-name">{tenant.name}</p><p class="hdr-meta">As of {w.as_of:%d %b %Y} · Jan–Dec fiscal year · synthetic data</p>')
 with export_col:
-    st.download_button("Export report", render_html(session.tenant_id, fy.year),
-                       file_name=f"{session.tenant_id}_{fy.label}_funder_report.html", mime="text/html",
-                       help="Counts from 1 to 4 are hidden. Print to PDF from the browser if needed.", width="stretch")
+    st.download_button("Export", render_html(session.tenant_id, fy.year), file_name=f"{session.tenant_id}_{fy.label}_report.html",
+                       mime="text/html", help="Funder report: counts from 1 to 4 hidden. Print to PDF from the browser.",
+                       width="stretch", icon=":material/download:")
 
-# ---------------------------------------------------------------- status strip
-flags = board(w, decisions)
-with st.container(key="strip"):
-    for col, fl in zip(st.columns(len(flags), gap="small"), flags):
-        with col:
-            st.markdown(f'<div class="lab">{fl.label}</div><div class="k-value">{fl.value}</div>'
-                        f'<div class="sub">{fl.detail}</div>', unsafe_allow_html=True)
-            if fl.status == "red":
-                st.markdown(f":red-badge[:material/{STATUS_ICON['red']}: {fl.badge}]")
+flags = {f.key: f for f in board(w, decisions)}
+show(ui.strip([
+    ("bed", ui.SAGE, flags["beds"].value, "in the house · " + flags["beds"].detail.replace(" beds", "")),
+    ("inbox", ui.BLUE, flags["waiting"].value, "waiting for intake · " + flags["waiting"].detail.replace("notes say ", "notes: ")),
+    ("phone", ui.ORANGE, flags["calls"].value, "calls due in 30 days"),
+    ("file", ui.VIOLET, flags["missing"].value, "follow-ups not recorded"),
+]))
+if flags["beds"].status == "red":
+    st.markdown(f":red-badge[:material/error: {flags['beds'].badge}: {flags['beds'].detail}]")
 
-tab_flow, tab_occ, tab_out, tab_notes, tab_ask = st.tabs(["Flow", "Occupancy and stay", "Outcomes", "From staff notes", "Ask"])
+tab_flow, tab_occ, tab_out, tab_notes, tab_ask = st.tabs(["Flow", "Occupancy", "Outcomes", "Notes", "Ask"])
 f = funnel(w.residents, fy, w.as_of)
 occ = monthly_occupancy(w.nightly_census, fy)
 s = stays(w.residents, fy)
@@ -156,97 +115,131 @@ o6, o12 = outcomes(w.followups, 6), outcomes(w.followups, 12)
 
 # ---------------------------------------------------------------- flow
 with tab_flow:
-    reached, admitted = f.stages[1], f.overall
-    tiles([("Referred", str(f.matured_n), "", f"in {fy.label}, with {MATURITY_DAYS}+ days to progress"),
-           ("Reached intake", pct_num(reached.n, reached.of), " %", f"{reached.n} of {reached.of}"),
-           ("Admitted", pct_num(admitted.n, admitted.of), " %", f"{admitted.n} of {admitted.of}")])
-    with st.container(border=True):
-        card_title("Time in each step · people who moved on")
-        st.markdown(table(["Step", "People", "Median days", "P90 days"],
-                          [[k, v.n, days(v.median), days(v.p90)] for k, v in f.timings.items()]), unsafe_allow_html=True)
-        excluded = [f"{n} from {k.lower()}" for k, n in f.timing_exclusions.items() if n]
-        foot(f"{f.cohort_n - f.matured_n} referrals after {f.cutoff:%d %b %Y} are too recent to judge and are not in these rates."
-             + (f" Left out of timings (dates missing or out of order): {', '.join(excluded)}." if excluded else ""))
+    t = f.timings
+    gaps = [f"{days(t['Referral to intake'].median)} days median · {days(t['Referral to intake'].p90)} P90",
+            f"{days(t['Intake to admission'].median)} days median · {days(t['Intake to admission'].p90)} P90"]
+    stages = [("Referred", f.matured_n, str(f.matured_n)),
+              ("Intake", f.stages[1].n, f"{f.stages[1].n} · {pct(f.stages[1].n, f.matured_n)}%"),
+              ("Admitted", f.overall.n, f"{f.overall.n} · {pct(f.overall.n, f.matured_n)}%")]
+    excluded = ", ".join(f"{n} from {k.lower()}" for k, n in f.timing_exclusions.items() if n)
+    body = ui.funnel(stages, gaps) + (
+        f'<div class="sub" style="margin-top:.6rem">Referral to admission {days(t["Referral to admission"].median)} days median · '
+        f'{days(t["Referral to admission"].p90)} P90 · {f.cohort_n - f.matured_n} recent referrals not counted yet</div>')
+    show(ui.card(f"Referral → intake → admission · {fy.label}", body,
+                 tip=f"Referrals made by {f.cutoff:%d %b %Y}, so each had {MATURITY_DAYS}+ days to progress; later ones are "
+                     f"too recent to judge. Times are for people who moved on. Left out of timings (dates missing or out of "
+                     f"order): {excluded or 'none'}. Percentages are of everyone referred."))
     not_admitted = w.residents[(w.residents["referral_fy"] == fy.year) & ~w.residents["admitted"]]
-    with st.expander(f"Why {len(not_admitted)} referrals weren't admitted · from staff notes"):
-        counts = not_admitted["note_referral"].fillna("no usable note").value_counts()
-        state = {"pending_intake": "open", "waitlisted": "open", "no usable note": "–"}
-        st.markdown(table(["Note says", "Open or closed", "Referrals"],
-                          [[label(k), state.get(k, "closed"), v] for k, v in counts.items()], right_from=2),
-                    unsafe_allow_html=True)
-        foot(NOTES_DISCLOSURE)
+    counts = not_admitted["note_referral"].fillna("no usable note").value_counts()
+    open_ = {"pending_intake", "waitlisted"}
+    rows = [(label(k) + (" (open)" if k in open_ else ""), v,
+             ui.BLUE if k in open_ else (ui.GREY_3 if k == "no usable note" else ui.ORANGE), f"{v} · {pct(v, len(not_admitted))}%")
+            for k, v in counts.items()]
+    show(ui.card(f"Why {len(not_admitted)} referrals weren't admitted · from staff notes", ui.hbars(rows), tip=NOTES_DISCLOSURE))
 
-# ---------------------------------------------------------------- occupancy and stay
+# ---------------------------------------------------------------- occupancy
 with tab_occ:
-    tiles([("Beds filled", pct_num(occ.bed_nights, occ.capacity_nights), " %", f"{occ.bed_nights:,} of {occ.capacity_nights:,} bed-nights"),
-           ("Typical stay", days(s.km_median_days), " days", f"admitted in {fy.label}, counting open stays"),
-           ("Still in the house", str(s.ongoing.n), "", f"{days(s.ongoing.median)} days so far (median)")])
+    show(ui.tiles([
+        ("Beds filled", pct(occ.bed_nights, occ.capacity_nights), " %", f"{occ.bed_nights:,} of {occ.capacity_nights:,} bed-nights"),
+        ("Typical stay", days(s.km_median_days), " days", "counting stays still open"),
+        ("Still in the house", str(s.ongoing.n), "", f"{days(s.ongoing.median)} days so far (median)"),
+    ]))
+    tip = "Counted per night: a bed is filled from admission up to, not including, discharge."
+    if occ.estimated_bed_nights:
+        tip += (f" {occ.estimated_bed_nights} bed-nights use estimated discharge dates (admission + "
+                f"{w.meta['estimated_stay_days']:.0f} days) for people with none recorded.")
+    if occ.monthly["month"].min() < pd.Timestamp("2025-04-01"):
+        tip += " Months before April 2025 may read low: the file starts in July 2024."
     with st.container(border=True):
-        card_title(f"Monthly occupancy against {w.capacity} beds")
+        show(f'<div class="ct"><span>Monthly occupancy · {w.capacity} beds</span>{ui.info(tip)}</div>')
         st.altair_chart(occupancy_chart(occ.monthly), width="stretch")
-        notes = ["Counted per night: a bed is filled from admission up to, not including, discharge."]
-        if occ.estimated_bed_nights:
-            notes.append(f"{occ.estimated_bed_nights} bed-nights use estimated discharge dates (admission + "
-                         f"{w.meta['estimated_stay_days']:.0f} days).")
-        if occ.monthly["month"].min() < pd.Timestamp("2025-04-01"):
-            notes.append("Months before April 2025 may read low: the file starts in July 2024.")
-        foot(" ".join(notes))
-    with st.container(border=True):
-        card_title(f"Length of stay · {s.admitted_n} admitted in {fy.label}")
-        fin = s.finished.set_index("group")
-        rows = [[g, int(fin.loc[g, "n"]), days(fin.loc[g, "median_days"]), days(fin.loc[g, "p90_days"])]
-                for g in ["Completed the program", "Left early (all reasons)"] if g in fin.index]
-        rows.append(["Still in the house (days so far)", s.ongoing.n, days(s.ongoing.median), days(s.ongoing.p90)])
-        st.markdown(table(["Stays", "People", "Median days", "P90 days"], rows), unsafe_allow_html=True)
-        foot(f"Typical stay ({days(s.km_median_days)} days) counts open stays as “at least this long” (Kaplan-Meier); "
-             f"finished stays alone would say {days(s.finished_all.median)}. "
-             f"{s.missing_discharge_date} stays with no discharge date are left out.")
+    fin = s.finished.set_index("group")
+    rows = []
+    for g, col in [("Completed the program", ui.SAGE), ("Left early (all reasons)", ui.ORANGE)]:
+        if g in fin.index:
+            rows.append((g.replace(" (all reasons)", ""), float(fin.loc[g, "median_days"]), col,
+                         f"{days(fin.loc[g, 'median_days'])} d · P90 {days(fin.loc[g, 'p90_days'])} · n {int(fin.loc[g, 'n'])}"))
+    rows.append(("Still in the house", float(s.ongoing.median or 0), ui.BLUE,
+                 f"{days(s.ongoing.median)} d so far · n {s.ongoing.n}"))
+    show(ui.card(f"Length of stay · median days · admitted in {fy.label}", ui.hbars(rows) +
+                 f'<div class="sub" style="margin-top:.6rem">Typical stay {days(s.km_median_days)} days counts open stays; '
+                 f'finished stays alone: {days(s.finished_all.median)}</div>',
+                 tip=f"Kaplan-Meier counts people still in the house as “at least this long”. {s.missing_discharge_date} "
+                     "stays with no discharge date are left out of length of stay."))
 
 # ---------------------------------------------------------------- outcomes
 with tab_out:
     cohort = w.residents[w.residents["admitted"] & (w.residents["admission_fy"] == fy.year)]
     ex = cohort["exit_type"].value_counts()
-    exit_parts = [(EXIT_COLORS[k][0], int(ex.get(k, 0)), EXIT_COLORS[k][1]) for k in EXIT_COLORS if ex.get(k, 0)]
     completed = int(ex.get("completed", 0))
-    tiles([("Completed", pct_num(completed, len(cohort)), " %", f"{completed} of {len(cohort)} admitted in {fy.label}"),
-           ("Engaged at 6 months", rng(o6.engaged_worst_case, o6.engaged_best_case), " %", f"worst to best case · {o6.due_n} due"),
-           ("Engaged at 12 months", rng(o12.engaged_worst_case, o12.engaged_best_case), " %",
-            f"{o12.due_n} due · too few to judge" if o12.due_n < 20 else f"worst to best case · {o12.due_n} due")])
-    with st.container(border=True):
-        card_title(f"How stays ended · {len(cohort)} admitted in {fy.label}")
-        st.altair_chart(share_bar(exit_parts), width="stretch")
-        st.markdown(share_legend(exit_parts), unsafe_allow_html=True)
+    show(ui.tiles([
+        ("Completed", pct(completed, len(cohort)), " %", f"{completed} of {len(cohort)} admitted"),
+        ("Engaged at 6 months", f"{100 * o6.engaged_worst_case:.0f}–{100 * o6.engaged_best_case:.0f}", " %",
+         f"worst to best case · {o6.due_n} due"),
+        ("Engaged at 12 months", f"{100 * o12.engaged_worst_case:.0f}–{100 * o12.engaged_best_case:.0f}", " %",
+         f"{o12.due_n} due · too few to judge" if o12.due_n < 20 else f"{o12.due_n} due"),
+    ]))
+    exit_parts = [("Completed", int(ex.get("completed", 0)), ui.SAGE), ("Transferred", int(ex.get("transferred", 0)), ui.BLUE),
+                  ("Left by choice", int(ex.get("left_by_choice", 0)), ui.ORANGE),
+                  ("Discharged by house", int(ex.get("discharged_by_house", 0)), ui.VIOLET),
+                  ("Custody", int(ex.get("custody", 0)), ui.GREY_1), ("Other or unknown", int(ex.get("other_or_unknown", 0)), ui.GREY_2),
+                  ("Still in program", int(ex.get("still_in_program", 0)), ui.LIGHT)]
+    from_notes = int(cohort["exit_from_notes"].sum())
+    c1, c2 = st.columns([3, 2], gap="medium")
+    with c1:
+        show(ui.card(f"How stays ended · {len(cohort)} admitted in {fy.label}", ui.seg_bar(exit_parts),
+                     tip="Completion is counted separately from discharge. The recorded reason comes first"
+                         + (f"; {from_notes} reasons recorded as “other” or blank were filled in from staff notes "
+                            "(AI-assisted; not used in the funder report)." if from_notes else ".")))
+    with c2:
         left = cohort[cohort["exit_type"] != "still_in_program"]
         dest = left["destination"].fillna("not stated").value_counts()
-        st.markdown('<div class="sub" style="margin-top:.4rem"><span class="lab">Where they went next · from notes</span>&nbsp; '
-                    + " · ".join(f"{label(k)} <b>{v}</b>" for k, v in dest.items()) + "</div>", unsafe_allow_html=True)
-        from_notes = int(cohort["exit_from_notes"].sum())
-        foot("Completion is counted separately from discharge. The recorded reason is used first"
-             + (f"; {from_notes} reasons recorded as “other” or blank were filled in from staff notes." if from_notes else ".")
-             + " Values from notes are AI-assisted and await staff review.")
-    with st.container(border=True):
-        for r in (o6, o12):
-            parts = [(OUTCOME_LABELS[k], v, OUTCOME_COLORS[OUTCOME_LABELS[k]]) for k, v in r.counts.items()]
-            card_title(f"{r.horizon_months}-month follow-up · {r.due_n} due" + (" · too few to judge" if r.due_n < 20 else ""))
-            st.altair_chart(share_bar(parts), width="stretch")
-            st.markdown(share_legend(parts), unsafe_allow_html=True)
-        foot("Everyone whose follow-up date has passed counts, including people who left early; all years pooled. "
-             "Worst case: nobody we couldn't reach is engaged. Best case: all of them are. "
-             "Outcomes are never reported only among people we reached.")
+        rows = [(label(k), v, ui.GREY_3 if k == "not stated" else ui.SAGE, str(v)) for k, v in dest.items()]
+        show(ui.card(f"Where {len(left)} people went next · from notes", ui.hbars(rows), tip=NOTES_DISCLOSURE))
+    for r in (o6, o12):
+        c = r.counts
+        parts = [("Engaged in recovery", c["engaged_in_recovery"], ui.SAGE), ("Lost to follow-up", c["lost_to_follow_up"], ui.GREY_1),
+                 ("Unknown", c["unknown"], ui.GREY_2), ("Not recorded", c["not_recorded"], ui.GREY_3),
+                 ("Relapse reported", c["relapse_reported"], ui.ORANGE)]
+        worst, best = 100 * r.engaged_worst_case, 100 * r.engaged_best_case
+        marks = [(0, f"◀ worst case {worst:.0f}%"), (best - 16, f"best case {best:.0f}% ▶")]
+        show(ui.card(f"{r.horizon_months}-month follow-up · {r.due_n} due" + (" · too few to judge" if r.due_n < 20 else ""),
+                     ui.seg_bar(parts, marks),
+                     tip="Everyone whose follow-up date has passed counts, including people who left early; all years "
+                         "pooled. Worst case: nobody we couldn't reach is engaged. Best case: all of them are. Never "
+                         "reported only among people reached."))
+
+# ---------------------------------------------------------------- notes
+with tab_notes:
+    hl = headline(w.residents, w.note_findings)
+    show(ui.tiles([(k, str(n), f" of {d}", "in the house now") for k, (n, d) in hl.items()], cols=4))
+    groups = summarize_notes(w.residents, w.note_findings)
+    cols = st.columns(2, gap="medium")
+    for i, g in enumerate(groups):
+        rows = [(label(v), n, FIELD_COLOR.get(fl, ui.GREY_2), f"{n} · {sh:.0%}") for fl, v, n, sh in g.table.itertuples(index=False)]
+        with cols[i % 2]:
+            show(ui.card(f"{g.name} · {g.people} people", ui.hbars(rows, scale=g.people) if rows else
+                         '<div class="sub">Nothing found in these notes.</div>',
+                         tip=NOTES_DISCLOSURE + f" {g.with_finding} of {g.people} have a usable note."
+                             + (" No note in this file mentions a pass." if g.name == "In the house now" and hl["Passes mentioned"][0] == 0 else "")))
 
 # ---------------------------------------------------------------- ask
 with tab_ask:
-    agent = get_agent()
     live = model_reachable() and resolve_mode() != "replay"
     turns_key = f"turns_{session.tenant_id}"
     st.session_state.setdefault(turns_key, [])
     turns: list[dict] = st.session_state[turns_key]
+
+    def ask(q: str) -> None:
+        with st.spinner("Working on it. The local model usually takes about 10 seconds."):
+            turns.append({"question": q, "result": agent.ask(q, session)})
+
     st.caption("Totals only. A self-hosted model turns your question into a checked, read-only query; it never sees "
-               "resident records. " + ("Local model running." if live else "Local model off: replaying recorded answers."))
+               "resident records." + ("" if live else " Local model off: recorded answers only."))
     ex_cols = st.columns(4, gap="small")
     for i, q in enumerate(EXAMPLES):
         if ex_cols[i].button(q, key=f"ex_{i}", width="stretch"):
-            turns.append({"question": q, "result": agent.ask(q, session)})
+            ask(q)
 
     def render(turn: dict, idx: int) -> None:
         r = turn["result"]
@@ -259,61 +252,41 @@ with tab_ask:
                 if chart is not None:
                     st.altair_chart(chart, width="stretch")
                 for d in r.definitions:
-                    st.caption(f":material/bookmark: Using {tenant.name}'s definition of “{d.term}”: {d.label} (version {d.version}).")
-                for c in r.caveats:
-                    st.caption(c)
+                    st.caption(f":material/bookmark: “{d.term}” = {d.label}")
                 st.caption(f":material/smart_toy: {r.disclosure}")
                 with st.expander("Spec, query and data"):
                     st.json(r.executed.model_dump(mode="json"), expanded=False)
                     st.code(r.sql, language="sql")
-                    st.caption(f"Parameters {r.params} · spec {r.executed.hash} · audit {r.event_id}")
                     st.dataframe(r.frame, hide_index=True, width="stretch")
+                    for c in r.caveats:
+                        st.caption(c)
             elif isinstance(r, Clarification):
                 st.markdown(f":orange-badge[:material/help: Needs a definition] **{r.question}**  \n{r.why}")
                 if turn.get("answered"):
                     st.caption(f"You chose: {turn['answered']}")
                 else:
                     for c in r.choices:
-                        if st.button(c.label, key=f"choice_{session.tenant_id}_{idx}_{c.id}"):
+                        if st.button(c.label, key=f"choice_{idx}_{c.id}"):
                             agent.define(session, r.term, c.id)
                             turn["answered"] = c.label
-                            turns.append({"question": turn["question"], "result": agent.ask(turn["question"], session)})
+                            ask(turn["question"])
                             st.rerun()
-                    st.caption(f"Saved as {tenant.name}'s definition and named under every answer that uses it.")
             else:
                 st.markdown(f":gray-badge[:material/block: Not answered] {r.message}")
 
-    for i, t in enumerate(turns):
-        render(t, i)
-    with st.expander(f"{tenant.name} definitions"):
+    for i, turn in enumerate(turns):
+        render(turn, i)
+    with st.expander("House definitions"):
         current = DefinitionStore().current(session.tenant_id)
         if not current:
-            st.caption("None yet. Words like " + ", ".join(f"“{t}”" for t in sorted(GLOSSARY)) + " are asked about the first time.")
+            st.caption("None yet. " + ", ".join(f"“{t}”" for t in sorted(GLOSSARY)) + " are asked about the first time.")
         for term, d in sorted(current.items()):
             a, b = st.columns([6, 1], vertical_alignment="center")
-            a.markdown(f"**{term}**: {d.label}  \n:gray[version {d.version}, set by {d.defined_by}]")
-            if b.button("Reset", key=f"reset_{session.tenant_id}_{term}"):
+            a.markdown(f"**{term}**: {d.label}  \n:gray[version {d.version}]")
+            if b.button("Reset", key=f"reset_{term}"):
                 DefinitionStore().save(session.tenant_id, term, None, session.user_id)
                 st.rerun()
     q = st.chat_input("Ask about your house")
     if q:
-        turns.append({"question": q, "result": agent.ask(q, session)})
+        ask(q)
         st.rerun()
-
-# ---------------------------------------------------------------- from staff notes
-with tab_notes:
-    hl = headline(w.residents, w.note_findings)
-    st.markdown('<div class="tiles" style="grid-template-columns:repeat(4,minmax(0,1fr))">' + "".join(
-        f'<div class="tile"><div class="lab">{k}</div><div class="val">{n}<span class="unit"> of {d}</span></div>'
-        f'<div class="sub">in the house now</div></div>' for k, (n, d) in hl.items()) + "</div>", unsafe_allow_html=True)
-    groups = summarize_notes(w.residents, w.note_findings)
-    cols = st.columns(2, gap="medium")
-    for i, g in enumerate(groups):
-        with cols[i % 2], st.container(border=True):
-            card_title(f"{g.name} · {g.people} people · {g.with_finding} with a usable note")
-            rows = [[fl, label(v), n, f"{sh:.0%}"] for fl, v, n, sh in g.table.itertuples(index=False)]
-            st.markdown(table(["Field", "Category", "People", "Share"], rows or [["–", "nothing found", 0, "–"]], right_from=2),
-                        unsafe_allow_html=True)
-    foot(NOTES_DISCLOSURE + " Notes are redacted before anything reads them, and each value must quote the words it "
-         "came from. Shares are out of everyone in the group, including people with no usable note."
-         + (" No note in this file mentions a pass; the field is tested on labelled examples." if hl["Passes mentioned"][0] == 0 else ""))

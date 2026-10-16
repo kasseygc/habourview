@@ -81,26 +81,28 @@ def funnel_chart(stages: list) -> alt.Chart:
     return _fit((bars + text).properties(height=150))
 
 
-def occupancy_chart(monthly: pd.DataFrame) -> alt.Chart:
+def occupancy_chart(monthly: pd.DataFrame, color: str = "#2a78d6") -> alt.Chart:
     df = monthly.assign(
         month_label=monthly["month"].dt.strftime("%b %Y"),
         note=monthly["partial_month"].map({True: "partial month", False: ""}),
     )
-    line = _base(df).mark_line(color=BLUE, strokeWidth=2, point=alt.OverlayMarkDef(size=60, filled=True, color=BLUE)).encode(
-        x=alt.X("month:T", title=None,
-                axis=alt.Axis(format="%b %y", tickCount={"interval": "month", "step": 1}, labelAngle=0, labelOverlap="greedy")),
-        y=alt.Y("occupancy_rate:Q", title="Beds filled", axis=alt.Axis(format="%"), scale=alt.Scale(domain=[0, 1.05])),
-        tooltip=[
-            alt.Tooltip("month_label:N", title="Month"),
-            alt.Tooltip("occupancy_rate:Q", title="Occupancy", format=".1%"),
-            alt.Tooltip("avg_residents:Q", title="Average residents a night", format=".1f"),
-            alt.Tooltip("peak_residents:Q", title="Busiest night"),
-            alt.Tooltip("beds:Q", title="Beds"),
-            alt.Tooltip("note:N", title=" "),
-        ],
-    )
-    full = alt.Chart(pd.DataFrame({"y": [1.0]})).mark_rule(color=MUTED, strokeDash=[4, 4]).encode(y="y:Q")
-    return _fit(full + line)
+    x = alt.X("month:T", title=None,
+              axis=alt.Axis(format="%b", tickCount={"interval": "month", "step": 1}, labelAngle=0, labelOverlap="greedy"))
+    y = alt.Y("occupancy_rate:Q", title=None, axis=alt.Axis(format="%", tickCount=5), scale=alt.Scale(domain=[0, 1.05]))
+    tip = [
+        alt.Tooltip("month_label:N", title="Month"),
+        alt.Tooltip("occupancy_rate:Q", title="Beds filled", format=".1%"),
+        alt.Tooltip("avg_residents:Q", title="Average residents a night", format=".1f"),
+        alt.Tooltip("peak_residents:Q", title="Busiest night"),
+        alt.Tooltip("note:N", title=" "),
+    ]
+    area = _base(df).mark_area(color=color, opacity=0.12).encode(x=x, y=y)
+    line = _base(df).mark_line(color=color, strokeWidth=2.5,
+                               point=alt.OverlayMarkDef(size=70, filled=True, color=color)).encode(x=x, y=y, tooltip=tip)
+    full = alt.Chart(pd.DataFrame({"y": [1.0], "t": ["all beds full"]}))
+    rule = full.mark_rule(color=MUTED, strokeDash=[4, 4]).encode(y="y:Q")
+    text = full.mark_text(align="left", dx=4, dy=-7, color=INK_2, fontSize=11).encode(y="y:Q", x=alt.value(0), text="t:N")
+    return _fit((area + rule + text + line).properties(height=230))
 
 
 def census_chart(census: pd.DataFrame) -> alt.Chart:

@@ -1,0 +1,11 @@
+{
+  "key": "7247f848caed3fb3e576",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "how many in the house on 11 october 2025?",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"residents_now\", \"group_by\": [], \"filters\": [], \"time_window\": {\"preset\": \"custom\", \"start\": \"2025-10-11\", \"end\": \"2025-10-11\"}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2450,
+  "output_tokens": 96,
+  "recorded_at": "2026-10-16T02:41:40+00:00"
+}

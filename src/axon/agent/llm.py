@@ -68,11 +68,23 @@ def model_reachable(provider: str = DEFAULT_PROVIDER) -> bool:
 
 class SpecModel:
     def __init__(self, model: str | None = None, mode: str | None = None, provider: str | None = None,
-                 cassette_dir: Path = CASSETTE_DIR):
+                 cassette_dir: Path = CASSETTE_DIR, timeout_s: float = 600):
         self.provider = provider or os.environ.get("AXON_LLM_PROVIDER", DEFAULT_PROVIDER)
         self.model = model or os.environ.get("AXON_LLM_MODEL", DEFAULT_MODEL)
         self.mode = mode or resolve_mode()
         self.cassette_dir = cassette_dir
+        self.timeout_s = timeout_s
+
+    def warm_up(self) -> None:
+        """Load the local model into memory so the first question doesn't pay for it."""
+        if self.provider != "ollama" or not model_reachable(self.provider):
+            return
+        body = json.dumps({"model": self.model, "keep_alive": "60m"}).encode()
+        req = urllib.request.Request(f"{OLLAMA_URL}/api/generate", data=body, headers={"Content-Type": "application/json"})
+        try:
+            urllib.request.urlopen(req, timeout=120).read()
+        except (urllib.error.URLError, TimeoutError, OSError):
+            pass
 
     def key(self, system: list[dict], user_text: str, schema: dict) -> str:
         payload = json.dumps(
@@ -119,10 +131,10 @@ class SpecModel:
         req = urllib.request.Request(f"{OLLAMA_URL}/api/chat", data=json.dumps(body).encode(),
                                      headers={"Content-Type": "application/json"})
         try:
-            with urllib.request.urlopen(req, timeout=600) as resp:
+            with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:
                 data = json.loads(resp.read())
-        except (urllib.error.URLError, TimeoutError) as e:
-            raise LLMUnavailable(f"The local model didn't answer: {e}") from e
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            raise LLMUnavailable("The local model is busy or didn't answer in time. Try again in a moment.") from e
         return LLMCall(
             text=data["message"]["content"], model=data.get("model", self.model), mode="model",
             stop_reason=data.get("done_reason", "stop"),
