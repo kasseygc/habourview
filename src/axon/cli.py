@@ -1,4 +1,4 @@
-"""Command line: `uv run axon build | report | eval`."""
+"""Command line: `uv run axon build | report | eval | notes-eval | redaction-eval`."""
 
 from __future__ import annotations
 
@@ -19,6 +19,8 @@ def main(argv: list[str] | None = None) -> int:
     nev = sub.add_parser("notes-eval", help="Score staff-note extraction against eval/notes_gold.yaml")
     nev.add_argument("--mode", choices=["auto", "replay", "record", "live"], default="replay")
     nev.add_argument("--model", default=None)
+    rev = sub.add_parser("redaction-eval", help="Score name redaction against eval/redaction_gold.yaml")
+    rev.add_argument("--models", nargs="+", default=["en_core_web_sm", "en_core_web_lg"], help="name-detector models to compare")
     args = parser.parse_args(argv)
 
     if args.command == "build":
@@ -37,6 +39,10 @@ def main(argv: list[str] | None = None) -> int:
         from axon.notes.evaluate import run_cli as notes_cli
 
         return notes_cli(mode=args.mode, model=args.model)
+    if args.command == "redaction-eval":
+        from axon.redaction_eval import run_cli as redaction_cli
+
+        return redaction_cli(args.models)
     if args.command == "eval":
         from axon.evaluation import run_cli
 

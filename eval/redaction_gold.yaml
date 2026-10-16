@@ -1,0 +1,55 @@
+# Labelled set for name redaction. All synthetic.
+# names: every string that must not survive redaction. keep: words that must survive (look-alikes
+# that notes and questions need, such as NA, AA, weekdays, places and organisations).
+# Written to cover what the rules alone miss: names with no relationship word nearby.
+
+# Names next to a relationship or role word (the rules' home ground)
+- {text: "Res. asked staff to update emerg contact to brother Kevin.", names: [Kevin]}
+- {text: "Spoke w/ probation officer J. Martel re: conditions.", names: [J. Martel]}
+- {text: "Visited by Aunt Rose and cousin Jay.", names: [Rose, Jay]}
+- {text: "Res tearful after call with Mom, Debbie.", names: [Debbie]}
+- {text: "Message from Nurse Patricia at the clinic.", names: [Patricia]}
+- {text: "Res's girlfriend Amber visited Sunday.", names: [Amber], keep: [Sunday]}
+- {text: "Court date set; lawyer Gupta notified.", names: [Gupta]}
+- {text: "Sponsor Mike attended NA with res.", names: [Mike], keep: [NA]}
+
+# Names with no relationship word nearby
+- {text: "Called Kevin, no answer.", names: [Kevin]}
+- {text: "Spoke w/ Linda re: visit on Sunday.", names: [Linda], keep: [Sunday]}
+- {text: "Kevin came by with groceries.", names: [Kevin]}
+- {text: "Linda (sister) called twice today.", names: [Linda]}
+- {text: "PO Martel requested an update on curfew.", names: [Martel]}
+- {text: "Res met with Dr Patel about meds.", names: [Patel]}
+- {text: "Left VM for Marcus, will try again Tues.", names: [Marcus], keep: [Tues]}
+- {text: "Jordan from Ontario Works confirmed funding.", names: [Jordan], keep: [Ontario Works]}
+- {text: "Res says Brandon is a bad influence, wants no contact.", names: [Brandon]}
+- {text: "Emergency contact changed to Sarah Thompson.", names: [Sarah, Thompson]}
+- {text: "Picked up by Mrs. Chen at 3pm.", names: [Chen]}
+- {text: "Res and Tyler had a verbal argument in the kitchen.", names: [Tyler]}
+- {text: "Asked if Grandma Lucie could visit Sat.", names: [Lucie], keep: [Sat]}
+- {text: "Called Ahmed's mother re: belongings.", names: [Ahmed]}
+- {text: "Res requested that Daniel be removed from visitor list.", names: [Daniel]}
+- {text: "Worker Aisha Khan from CAS called.", names: [Aisha, Khan], keep: [CAS]}
+- {text: "Dropped off by friend (Chris) after work.", names: [Chris]}
+- {text: "Kayla and res attended AA together.", names: [Kayla], keep: [AA]}
+- {text: "Priya dropped off clothes; res in good spirits.", names: [Priya]}
+
+# Questions typed into the question tool
+- {text: "How is Kevin doing?", names: [Kevin]}
+- {text: "Did Linda call back?", names: [Linda]}
+- {text: "Has Marcus been to group this week?", names: [Marcus]}
+- {text: "What did staff note about Tyler?", names: [Tyler]}
+
+# No names: look-alikes that must survive
+- {text: "Attending NA 3x/wk, AA on Sundays.", keep: [NA, AA, Sundays]}
+- {text: "SMART Recovery group Tuesday evening.", keep: [SMART Recovery, Tuesday]}
+- {text: "Res. back from weekend pass, appears well.", keep: [Res]}
+- {text: "Referred by CAMH, intake booked for Monday.", keep: [CAMH, Monday]}
+- {text: "Moved to Ottawa to live with family.", keep: [Ottawa]}
+- {text: "Discharged to Salvation Army shelter.", keep: [Salvation Army]}
+- {text: "Client declined bed offer, prefers program closer to family.", keep: [Client]}
+- {text: "Good Friday visit approved.", keep: [Good Friday]}
+- {text: "Tim Hortons gift card given for completing phase 1.", keep: [Tim Hortons]}
+- {text: "Will follow up next week.", keep: [Will]}
+- {text: "Hope to transfer to phase 2 soon.", keep: [Hope]}
+- {text: "How full was the house each month in 2025?"}

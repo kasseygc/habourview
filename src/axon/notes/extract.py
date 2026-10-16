@@ -42,10 +42,11 @@ def _review(field: str, sources: set[str], model_ran: bool) -> str:
     return "accepted" if "model" in sources else "needs_review"
 
 
-def run_notes(raw: pd.DataFrame, llm: SpecModel | None) -> NotesResult:
+def run_notes(raw: pd.DataFrame, llm: SpecModel | None, directory: tuple[str, ...] = ()) -> NotesResult:
+    """directory: the house's known client and contact names, redacted before anything reads a note."""
     rows = []
     for rid, note, status in zip(raw["resident_id"], raw["staff_note"], raw["current_status"]):
-        text = redact((note or "").strip()).text
+        text = redact((note or "").strip(), directory=directory).text
         rows.append({"resident_id": rid, "note": text, "status": status})
 
     # One model item per unique (redacted note, status); placeholders and blanks are skipped.

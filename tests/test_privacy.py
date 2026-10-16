@@ -91,3 +91,37 @@ def test_the_app_never_writes_what_users_type_to_disk(tmp_path, monkeypatch):
     monkeypatch.setattr(model, "_call_ollama", lambda system, user, schema: llm_mod.LLMCall("{}", "stub", "model", "stop"))
     model.complete([{"type": "text", "text": "instructions"}], "a question someone typed", {})
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("Called Kevin, no answer.", "Called [NAME], no answer."),
+    ("Spoke w/ Linda re: visit on Sunday.", "Spoke w/ [NAME] re: visit on Sunday."),
+    ("Linda (sister) called twice today.", "[NAME] (sister) called twice today."),
+    ("PO Martel requested an update on curfew.", "PO [NAME] requested an update on curfew."),
+    ("Res tearful after call with Mom, Debbie.", "Res tearful after call with Mom, [NAME]."),
+    ("Emergency contact changed to Sarah Thompson.", "Emergency contact changed to [NAME]."),
+])
+def test_names_with_no_relationship_word_are_redacted(text, expected):
+    assert redact(text, directory=get_tenant("harbourview").directory()).text == expected
+
+
+@pytest.mark.parametrize("text", ["Attending NA 3x/wk, AA on Sundays.", "SMART Recovery group Tuesday evening.",
+                                  "Will follow up next week.", "Referred by CAMH, intake booked for Monday."])
+def test_words_notes_need_are_not_mistaken_for_names(text):
+    assert redact(text).text == text
+
+
+def test_a_name_in_a_question_is_declined_before_the_model(make_agent):
+    from axon.agent.pipeline import Declined, Session
+
+    agent, stub = make_agent({})
+    r = agent.ask("How is Tyler doing since he moved to phase 2?", Session("harbourview", "director@harbourview"))
+    assert isinstance(r, Declined) and r.reason == "row_level"
+    assert stub.calls == []
+
+
+def test_name_redaction_holds_on_the_labelled_set():
+    from axon.redaction_eval import run
+
+    full = next(s for s in run(["en_core_web_lg"]) if s.name == "Rules + directory + detector (en_core_web_lg)")
+    assert full.recall >= 0.95 and not full.keep_lost and not full.false_sentences

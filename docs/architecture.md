@@ -157,10 +157,16 @@ questions (redacted), with the declines and clarifications reviewed by a person 
 - **What the model sees:** for questions, the catalogue, the house's saved definitions and the
   redacted question, never records or results. For notes, one redacted note at a time with no
   identifiers attached. Notes themselves never enter the analytics tables; only structured values do.
-- **Redaction:** questions are redacted before the call. Any identifier (a name next to a
-  relationship word, a phone number, a resident ID) means the question is about a person, so it
-  is declined before reaching the model. Answers are totals only; small counts are flagged in
-  the director's view and hidden in the funder export.
+- **Redaction:** notes and questions are redacted before anything reads them, in four layers:
+  structured identifiers (phones, emails, health card numbers, SINs, dates, resident IDs); names
+  next to a relationship or role word ("brother Kevin", "PO Martel", "Linda (sister)"); the
+  house's own directory of client and contact names; and a self-hosted name detector (spaCy
+  `en_core_web_lg`, run locally) for names with no context ("Called Kevin"). Words notes need
+  (NA, AA, weekdays) and relationship words are never removed. On 43 labelled sentences the
+  layers together catch 33 of 34 names with no false alarms; rules alone catch 18
+  (`uv run axon redaction-eval`, eval/REDACTION_REPORT.md). Any identifier in a question means it
+  is about a person, so it is declined before reaching the model. Answers are totals only; small
+  counts are flagged in the director's view and hidden in the funder export.
 - **Where it runs:** a self-hosted open model in Axon's own AWS account in Canada (ca-central-1).
   Axon runs on AWS, so no outside company processes the text and no new processor agreements are
   needed. Not Bedrock in ca-central-1 (current Claude models route to US regions), not the Anthropic

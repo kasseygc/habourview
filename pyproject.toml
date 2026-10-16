@@ -8,11 +8,14 @@ dependencies = [
     "altair>=5.4",
     "anthropic>=0.70",
     "duckdb>=1.1",
+    "en-core-web-lg",
+    "en-core-web-sm",
     "numpy>=2.0",
     "pandas>=2.2",
     "pydantic>=2.8",
     "python-dotenv>=1.0",
     "pyyaml>=6.0",
+    "spacy>=3.8,<3.9",
     "sqlglot>=25.0",
     "streamlit>=1.40",
     "vl-convert-python>=1.6",
@@ -37,3 +40,7 @@ packages = ["src/axon"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.uv.sources]
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
+en-core-web-lg = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl" }

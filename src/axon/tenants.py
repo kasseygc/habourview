@@ -6,7 +6,9 @@ and nothing the LLM writes, can choose it.
 
 from __future__ import annotations
 
+import csv
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 from axon.config import RAW_DIR, WAREHOUSE_DIR
@@ -21,6 +23,23 @@ class Tenant:
     @property
     def warehouse_path(self) -> Path:
         return WAREHOUSE_DIR / f"{self.id}.duckdb"
+
+    @property
+    def directory_path(self) -> Path:
+        """Known client and contact names, used only to redact them. In production this comes from the
+        house's case-management system and never leaves it; here it is a small synthetic list."""
+        return RAW_DIR / f"{self.id}_directory.csv"
+
+    def directory(self) -> tuple[str, ...]:
+        return _read_directory(self.directory_path)
+
+
+@lru_cache(maxsize=8)
+def _read_directory(path: Path) -> tuple[str, ...]:
+    if not path.exists():
+        return ()
+    with path.open(newline="") as f:
+        return tuple(row["name"] for row in csv.DictReader(f) if row.get("name"))
 
 
 TENANTS: dict[str, Tenant] = {

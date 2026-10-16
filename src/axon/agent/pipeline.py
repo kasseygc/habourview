@@ -137,7 +137,7 @@ class Agent:
     def ask(self, question: str, session: Session) -> Result:
         started = time.perf_counter()
         tenant = get_tenant(session.tenant_id)
-        red = redact(question, keep_dates=True)
+        red = redact(question, keep_dates=True, directory=tenant.directory())
         log = dict(tenant=tenant.id, user=session.user_id, role=session.role, question_redacted=red.text,
                    redacted_types=sorted(set(red.found)))
 

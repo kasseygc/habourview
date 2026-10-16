@@ -14,7 +14,8 @@ plain-English questions with checked, read-only queries (Task B), and short writ
 
 ## Run it
 
-Needs [uv](https://docs.astral.sh/uv/). It installs Python 3.12 and every dependency.
+Needs [uv](https://docs.astral.sh/uv/). It installs Python 3.12 and every dependency, including the
+local name detector used for redaction (spaCy's large English model, about 400 MB, downloaded once).
 
 ```bash
 uv sync
@@ -25,9 +26,10 @@ uv run streamlit run app/streamlit_app.py  # opens the app at http://localhost:8
 Other commands:
 
 ```bash
-uv run pytest                              # 143 tests
+uv run pytest                              # 180 tests
 uv run axon eval                           # score the 45 evaluation questions from recordings
-uv run axon notes-eval                     # score note extraction on 65 labelled notes
+uv run axon notes-eval                     # score note extraction on 70 labelled notes
+uv run axon redaction-eval                 # score name redaction, layer by layer, on 43 sentences
 uv run axon report --fy 2025               # write the funder report to out/
 uv run python scripts/generate_data.py     # regenerate the second house (seeded, deterministic)
 ```
@@ -66,7 +68,8 @@ uv run python scripts/read_review_sheet.py --apply    # write valid corrections 
 ## What's where
 
 ```
-data/raw/            harbourview_residents.csv (given), testhouse_residents.csv (generated)
+data/raw/            harbourview_residents.csv (given), testhouse_residents.csv (generated),
+                     harbourview_directory.csv (synthetic client and contact names, used only to redact)
 src/axon/
   ingest.py          read and type-check a house's CSV
   model.py           build the shared tables: residents, followups, nightly_census
@@ -75,7 +78,8 @@ src/axon/
   status.py          the four status-strip facts (and the notes review queue, not shown in the app)
   notes/             staff notes to fields: schema, rules, model, merge, review, evaluation
   suppress.py        small-count hiding for the funder report
-  redact.py          PHI redaction for notes and questions
+  redact.py          PHI redaction: identifiers, names by rule, the house directory, a local name detector
+  redaction_eval.py  name-redaction scores per layer (uv run axon redaction-eval)
   synth.py           seeded generator for extra houses
   agent/             catalogue, spec, compiler, SQL guard, executor, glossary,
                      house definitions, prompt, LLM client, answer templates, audit log

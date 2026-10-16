@@ -46,7 +46,7 @@ def build_tenant(tenant: Tenant, as_of: date = AS_OF, llm: SpecModel | None = No
     model = build_model(raw, as_of)
     issues = check(raw, model, as_of)
     # Staff notes are read in their own step; only structured fields join the analytics tables.
-    notes = run_notes(raw, llm if llm is not None else SpecModel())
+    notes = run_notes(raw, llm if llm is not None else SpecModel(), directory=tenant.directory())
     residents = model.residents.merge(notes.per_resident, on="resident_id", how="left")
     residents = residents.merge(exits.derive(residents, notes.findings), on="resident_id", how="left")
     meta = {
