@@ -68,6 +68,11 @@
   question: What was bed occupancy from March to June 2025, month by month?
   kind: answer
   spec: {metric: occupancy, group_by: [month], time_window: {preset: custom, start: 2025-03-01, end: 2025-06-30}, chart: line}
+- id: o05
+  category: occupancy
+  question: How many people were in the house on October 11 2025?
+  kind: answer
+  spec: {metric: occupancy, group_by: [month], time_window: {preset: custom, start: 2025-10-11, end: 2025-10-11}, chart: table}
 
 - id: f01
   category: outcomes

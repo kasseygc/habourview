@@ -9,6 +9,7 @@ import pandas as pd
 
 from axon.agent.registry import METRICS
 from axon.agent.spec import QuerySpec
+from axon.config import AS_OF
 from axon.metrics.outcomes import OUTCOME_LABELS
 from axon.notes.schema import label
 from axon.suppress import is_small
@@ -50,11 +51,7 @@ def narrate(spec: QuerySpec, df: pd.DataFrame) -> str:
             text += " The staff notes say: " + "; ".join(f"{label(k)} {v}" for k, v in by.items()) + "."
         return text
     if spec.metric == "residents_now":
-        total = int(df["n"].sum())
-        if "current_status" not in df.columns:
-            return f"{total} people as of the extract date."
-        parts = ", ".join(f"{STATUS_LABELS.get(s, s)} {n}" for s, n in zip(df["current_status"], df["n"]))
-        return f"{total} people as of the extract date ({parts})."
+        return _residents_now(spec, df)
     return _counts(spec, df, m.label.lower())
 
 
@@ -72,14 +69,31 @@ def _counts(spec: QuerySpec, df: pd.DataFrame, label: str) -> str:
     return text
 
 
+def _residents_now(spec: QuerySpec, df: pd.DataFrame) -> str:
+    total = int(df["n"].sum())
+    statuses = next((f for f in spec.filters if f.field == "current_status"), None)
+    if "current_status" in df.columns:
+        parts = ", ".join(f"{STATUS_LABELS.get(s, s)} {n}" for s, n in zip(df["current_status"], df["n"]))
+        return f"On {AS_OF:%d %b %Y}: {total} people ({parts})."
+    if statuses is None:
+        return (f"{total} people have been admitted since the data starts (July 2024), counting every current "
+                f"status on {AS_OF:%d %b %Y}: in the house, aftercare, alumni and people who left.")
+    which = ", ".join(STATUS_LABELS.get(str(v), str(v)) for v in statuses.values)
+    return f"On {AS_OF:%d %b %Y}: {total} people " + ("not " if statuses.op == "not_in" else "") + f"in {which}."
+
+
 def _occupancy(spec: QuerySpec, df: pd.DataFrame) -> str:
     nights = df["nights"].sum()
+    beds = int(df["beds"].max())
+    if nights == 1:
+        n = int(df["peak_residents"].iloc[0])
+        night = spec.time_window.start
+        return f"On the night of {night:%d %b %Y}, {n} of {beds} beds were filled ({n / beds:.0%})."
     overall = (df["occupancy_rate"] * df["beds"] * df["nights"]).sum() / (df["beds"] * df["nights"]).sum()
     avg = (df["avg_residents"] * df["nights"]).sum() / nights
     col = spec.group_by[0]
     hi = df.loc[df["occupancy_rate"].idxmax()]
     lo = df.loc[df["occupancy_rate"].idxmin()]
-    beds = int(df["beds"].max())
     return (
         f"Beds were {overall:.0%} full on average {window_phrase(spec)} ({avg:.1f} of {beds} beds a night). "
         f"Fullest {col.replace('_', ' ')}: {hi[col]} ({hi['occupancy_rate']:.0%}); "

@@ -25,7 +25,6 @@ from axon.metrics.funnel import funnel  # noqa: E402
 from axon.metrics.occupancy import monthly_occupancy  # noqa: E402
 from axon.metrics.outcomes import outcomes  # noqa: E402
 from axon.metrics.stays import stays  # noqa: E402
-from axon.notes.review import ReviewStore  # noqa: E402
 from axon.notes.schema import NOTES_DISCLOSURE, label  # noqa: E402
 from axon.notes.summary import headline, summarize as summarize_notes  # noqa: E402
 from axon.report.funder import render_html  # noqa: E402
@@ -52,6 +51,7 @@ FIELD_COLOR = {"referral": ui.BLUE, "discharge": ui.VIOLET, "destination": ui.SA
 def get_agent() -> Agent:
     agent = Agent()
     agent.llm.timeout_s = 90  # interactive: fail politely instead of hanging
+    agent.llm.save_recordings = False  # replay a recording if one exists, but never write what users type
     threading.Thread(target=agent.llm.warm_up, daemon=True).start()
     return agent
 
@@ -86,7 +86,6 @@ session = SESSION
 agent = get_agent()
 tenant = get_tenant(session.tenant_id)
 w = get_warehouse(session.tenant_id)
-decisions = ReviewStore().decisions(session.tenant_id)
 head, fy_col, export_col = st.columns([6, 1.3, 1.3], vertical_alignment="bottom")
 with fy_col:
     fy = FiscalYear(st.selectbox("Fiscal year", [2025, 2024], format_func=lambda y: f"FY{y}" + (" (Jul–Dec)" if y == 2024 else "")))
@@ -97,12 +96,13 @@ with export_col:
                        mime="text/html", help="Funder report: counts from 1 to 4 hidden. Print to PDF from the browser.",
                        width="stretch", icon=":material/download:")
 
-flags = {f.key: f for f in board(w, decisions)}
+flags = {f.key: f for f in board(w)}
 show(ui.strip([
-    ("bed", ui.SAGE, flags["beds"].value, f"in the house, {flags['beds'].detail.replace(' beds', '')}"),
-    ("inbox", ui.BLUE, flags["waiting"].value, f"waiting for intake (notes: {flags['waiting'].detail.replace('notes say ', '')})"),
-    ("phone", ui.ORANGE, flags["calls"].value, "calls due in 30 days"),
-    ("file", ui.VIOLET, flags["missing"].value, "follow-ups not recorded"),
+    ("bed", ui.SAGE, flags["beds"].value, f"in the house, {flags['beds'].detail.replace(' beds', '')}", None),
+    ("inbox", ui.BLUE, flags["waiting"].value, f"{flags['waiting'].label.lower()}\n{flags['waiting'].detail}",
+     flags["waiting"].tip),
+    ("phone", ui.ORANGE, flags["calls"].value, "calls due in 30 days", None),
+    ("file", ui.VIOLET, flags["missing"].value, "follow-ups not recorded", None),
 ]))
 if flags["beds"].status == "red":
     st.markdown(f":red-badge[:material/error: {flags['beds'].badge}: {flags['beds'].detail}]")

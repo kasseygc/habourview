@@ -213,6 +213,8 @@ def _agent_chart(spec: QuerySpec, df: pd.DataFrame) -> alt.Chart | None:
         return None
     m = METRICS[spec.metric]
     if spec.metric == "occupancy":
+        if int(df["nights"].sum()) == 1:
+            return None
         x = spec.group_by[0]
         d = df.assign(month=pd.to_datetime(df[x])) if x == "month" else df
         if x == "month":

@@ -35,6 +35,21 @@ ROW_LEVEL = re.compile(
     re.IGNORECASE,
 )
 IDENTIFIER_TAGS = {"NAME", "RESIDENT_ID", "PHONE", "EMAIL", "HEALTH_CARD", "SIN"}
+# Attempts to change the instructions are declined before the model sees them.
+INJECTION = re.compile(
+    r"\b(?:ignore|disregard|forget|override|bypass)\b[^.?!]{0,40}\b(?:instructions?|rules?|prompts?|guardrails?|restrictions?)\b"
+    r"|\bsystem prompt\b|\bdeveloper mode\b|\bjailbreak|\byou are now\b|\bpretend (?:you|to be)\b",
+    re.IGNORECASE,
+)
+# A date in the question. Current status exists only for the extract date, so a point-in-time
+# answer would silently ignore it.
+_MONTH = (r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?"
+          r"|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?")
+DATE_REFERENCE = re.compile(
+    rf"\b(?:19|20)\d\d\b|\b\d{{1,2}}/\d{{1,2}}\b|\b{_MONTH}\s+\d{{1,2}}\b|\b\d{{1,2}}(?:st|nd|rd|th)?\s+(?:of\s+)?{_MONTH}"
+    r"|\b(?:last|previous) (?:night|week|month|year)\b|\byesterday\b|\bago\b",
+    re.IGNORECASE,
+)
 
 # Every AI-assisted output says so (as Axon does for every AI-assisted report).
 AI_DISCLOSURE = ("AI-assisted: a self-hosted language model turned your question into a query. It never saw "
@@ -47,6 +62,9 @@ DECLINE_MESSAGES = {
     "other_house": "I can only answer questions about your own house.",
     "out_of_scope": "That isn't something I can answer yet.",
     "unsafe": "I can't help with that request.",
+    "point_in_time": f"Current status is only known for {AS_OF:%d %b %Y}, the extract date. For another date, ask "
+                     "how many people were in the house that night, for example: \"How many people were in the "
+                     "house on 1 October 2025?\"",
 }
 
 
@@ -132,6 +150,8 @@ class Agent:
         # 1. Questions about a person never reach the model.
         if IDENTIFIER_TAGS & set(red.found) or ROW_LEVEL.search(red.text):
             return done(Declined("row_level", DECLINE_MESSAGES["row_level"]), decided_by="rules")
+        if INJECTION.search(red.text):
+            return done(Declined("unsafe", DECLINE_MESSAGES["unsafe"]), decided_by="rules")
 
         # 2. Known fuzzy words must be defined for this house before anything runs.
         definitions = self.store.current(tenant.id)
@@ -199,6 +219,9 @@ class Agent:
         except (ValueError, KeyError) as e:
             return done(Failed("A saved house definition doesn't fit this question. " + str(e)[:200]),
                         error="definition_conflict")
+        if METRICS[spec.metric].date_column is None and DATE_REFERENCE.search(red.text):
+            return done(Declined("point_in_time", DECLINE_MESSAGES["point_in_time"]), decided_by="rules",
+                        spec=spec.model_dump(mode="json"))
         executed = ExecutedSpec(spec=spec, definitions={d.term: d.choice_id for d in used})
 
         # 5. Compile, check and run, read-only, against this house's file only.
@@ -251,7 +274,7 @@ def metric_caveats(spec: QuerySpec) -> list[str]:
     if spec.metric == "occupancy":
         notes.append("Counted each night: a resident fills a bed from admission up to, not including, discharge.")
     if spec.metric == "residents_now":
-        notes.append(f"Status as of the extract date, {AS_OF:%d %b %Y}.")
+        notes.append(f"Current status on {AS_OF:%d %b %Y}, the extract date.")
     if spec.metric == "referrals_by_note":
         notes.append("Read from staff notes by rules and a model. Not yet confirmed by staff; recorded fields are unchanged.")
     return notes

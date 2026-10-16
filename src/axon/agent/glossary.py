@@ -106,7 +106,7 @@ GLOSSARY: dict[str, Term] = {
         ),
         Term(
             "dropout",
-            _p(r"drop(?:ped)?[- ]?outs?|dropped|quit|left early|walked out"),
+            _p(r"drop(?:ped)?[- ]?outs?|dropped|quit|walked out"),
             "Which departures count as dropping out?",
             "People leave early for different reasons, and only some are the resident's own choice.",
             (

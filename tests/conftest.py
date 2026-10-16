@@ -55,7 +55,7 @@ AS_OF = date(2026, 1, 15)
 
 
 class StubLLM:
-    """Stands in for Claude. Maps a substring of the question to a reply."""
+    """Stands in for the language model. Maps a substring of the question to a reply."""
 
     def __init__(self, replies: dict[str, dict | str]):
         self.replies = replies

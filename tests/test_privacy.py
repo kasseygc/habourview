@@ -81,3 +81,13 @@ def test_staff_notes_never_reach_the_warehouse():
             for r in con.execute(f"DESCRIBE {t}").fetchall()}
     con.close()
     assert "staff_note" not in cols
+
+
+def test_the_app_never_writes_what_users_type_to_disk(tmp_path, monkeypatch):
+    from axon.agent import llm as llm_mod
+
+    model = llm_mod.SpecModel(mode="auto", cassette_dir=tmp_path, save_recordings=False)
+    monkeypatch.setattr(llm_mod, "model_reachable", lambda provider="ollama": True)
+    monkeypatch.setattr(model, "_call_ollama", lambda system, user, schema: llm_mod.LLMCall("{}", "stub", "model", "stop"))
+    model.complete([{"type": "text", "text": "instructions"}], "a question someone typed", {})
+    assert list(tmp_path.iterdir()) == []

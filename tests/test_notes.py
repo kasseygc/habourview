@@ -110,20 +110,19 @@ def test_note_quotes_never_reach_agent_tables(hv):
     assert "note_referral" in hv.residents.columns and "staff_note" not in hv.residents.columns
 
 
-def test_notes_show_most_waiting_referrals_are_closed(hv):
+def test_notes_split_new_referrals_without_changing_the_recorded_count(hv):
     flags = {f.key: f for f in board(hv)}
     assert flags["waiting"].value == "7"
-    assert flags["waiting"].detail == "notes say 6 closed, 1 open"
+    assert flags["waiting"].detail == "1 waiting, 6 closed (staff notes)"
+    assert "9 older referrals still have notes saying pending intake" in flags["waiting"].tip
 
 
-def test_confirming_closures_updates_the_waiting_count(hv, tmp_path):
+def test_confirming_findings_removes_them_from_the_review_queue(hv, tmp_path):
     store = ReviewStore(tmp_path)
     q = review_queue(hv)
     recent = hv.residents[~hv.residents["matured"] & hv.residents["note_referral_state"].eq("closed")
                           & (hv.residents["stage"] == "referred")]
     for x in recent.itertuples():
         store.decide("harbourview", x.resident_id, "referral", x.note_referral, "confirm", "director")
-    flags = {f.key: f for f in board(hv, store.decisions("harbourview"))}
-    assert flags["waiting"].value == "1"
     queued = {f"{x.resident_id}|referral|{x.note_referral}" for x in recent.itertuples()} & set(q["key"]) if len(q) else set()
     assert len(review_queue(hv, store.decisions("harbourview"))) == len(q) - len(queued)

@@ -10,6 +10,8 @@ Modes (env AXON_LLM_MODE):
   replay  recordings only; fail if missing (what tests use)
   record  always call the model and overwrite the recording
   live    always call the model, save nothing
+The app sets save_recordings=False, so nothing a user types is written to disk; only the
+evaluation commands record.
 
 What is sent: instructions plus either the catalogue and a redacted question, or redacted notes.
 Never resident records, query results, names, IDs or dates of birth.
@@ -68,12 +70,13 @@ def model_reachable(provider: str = DEFAULT_PROVIDER) -> bool:
 
 class SpecModel:
     def __init__(self, model: str | None = None, mode: str | None = None, provider: str | None = None,
-                 cassette_dir: Path = CASSETTE_DIR, timeout_s: float = 600):
+                 cassette_dir: Path = CASSETTE_DIR, timeout_s: float = 600, save_recordings: bool = True):
         self.provider = provider or os.environ.get("AXON_LLM_PROVIDER", DEFAULT_PROVIDER)
         self.model = model or os.environ.get("AXON_LLM_MODEL", DEFAULT_MODEL)
         self.mode = mode or resolve_mode()
         self.cassette_dir = cassette_dir
         self.timeout_s = timeout_s
+        self.save_recordings = save_recordings
 
     def warm_up(self) -> None:
         """Load the local model into memory so the first question doesn't pay for it."""
@@ -107,7 +110,7 @@ class SpecModel:
             )
         call = self._call_anthropic(system, user_text, schema) if self.provider == "anthropic" \
             else self._call_ollama(system, user_text, schema)
-        if self.mode in {"auto", "record"}:
+        if self.mode in {"auto", "record"} and self.save_recordings:
             self.cassette_dir.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps({
                 "key": key, "provider": self.provider, "model": call.model, "input_redacted": user_text,

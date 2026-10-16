@@ -32,11 +32,14 @@ CSS = """
 .ax-name { font-size: 1.3rem; font-weight: 600; color: #030302; margin: 0; }
 .ax-meta { color: #7e7d91; font-size: .85rem; margin: .1rem 0 0; }
 .ax-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; margin: .4rem 0 .8rem; }
-.ax-s { display: flex; gap: .7rem; align-items: center; background: #fff; border: 1px solid #eceaf2; border-radius: 12px; padding: .6rem .8rem; min-width: 0; }
+.ax-s { position: relative; display: flex; gap: .7rem; align-items: center; background: #fff; border: 1px solid #eceaf2; border-radius: 12px; padding: .6rem 1.9rem .6rem .8rem; min-width: 0; }
+@media (max-width: 960px) { .ax-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .ax-ic { flex: none; width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
 .ax-ic svg { width: 20px; height: 20px; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .ax-sv { font-size: 1.25rem; font-weight: 600; color: #030302; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .ax-sl { font-size: .78rem; color: #54586b; line-height: 1.3; }
+.ax-sl2 { color: #7e7d91; }
+.ax-s > .ax-info { position: absolute; top: .55rem; right: .55rem; }
 .ax-card { background: #fff; border: 1px solid #eceaf2; border-radius: 12px; padding: .9rem 1rem 1rem; margin-bottom: .8rem; }
 .ax-ct { display: flex; justify-content: space-between; align-items: center; font-size: .72rem; letter-spacing: .07em;
          text-transform: uppercase; color: #7e7d91; margin-bottom: .7rem; }
@@ -93,13 +96,17 @@ def sub(text: str, top: str = ".6rem") -> str:
     return f'<div class="ax-sub" style="margin-top:{top}">{text}</div>'
 
 
-def strip(items: list[tuple[str, str, str, str]]) -> str:
-    """(icon, colour, value, label)"""
+def strip(items: list[tuple[str, str, str, str, str | None]]) -> str:
+    """(icon, colour, value, label, tip). A label's second line, after a newline, is drawn lighter."""
+    def text(label: str) -> str:
+        first, _, second = label.partition("\n")
+        return escape(first) + (f'<br><span class="ax-sl2">{escape(second)}</span>' if second else "")
+
     cells = "".join(
         f'<div class="ax-s"><div class="ax-ic" style="background:{TINT[c]}"><svg viewBox="0 0 24 24" style="stroke:{DARK[c]}">'
         f'{ICONS[icon]}</svg></div><div style="min-width:0"><div class="ax-sv">{escape(v)}</div>'
-        f'<div class="ax-sl">{escape(l)}</div></div></div>'
-        for icon, c, v, l in items)
+        f'<div class="ax-sl">{text(l)}</div></div>{info(tip) if tip else ""}</div>'
+        for icon, c, v, l, tip in items)
     return f'<div class="ax-strip">{cells}</div>'
 
 
