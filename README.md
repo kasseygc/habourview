@@ -3,10 +3,11 @@
 A take-home for Axon: a director's status board and funder report for a fictional recovery home
 (Task A), staff notes read into structured fields, a prototype that answers
 plain-English questions with checked, read-only queries (Task B), and short written answers
-(Task C). All data is synthetic. The one-page write-up and Task C answers are submitted separately.
+(Task C). All data is synthetic.
 
+- [docs/Harbourview_writeup.docx](docs/Harbourview_writeup.docx): one-page write-up (decisions, assumptions,
+  trade-offs, next steps) with Task C as a one-page appendix
 - [docs/architecture.md](docs/architecture.md): notes-to-fields and question-to-chart designs, safety, PHI, evaluation
-- [docs/Harbourview_design_and_reasoning.docx](docs/Harbourview_design_and_reasoning.docx): the design, with diagrams, for review
 - [docs/review/evaluation_review_completed.xlsx](docs/review/evaluation_review_completed.xlsx): my review of every
   question and labelled note; [eval/REVIEW.md](eval/REVIEW.md) records what it changed
 - [eval/NOTES_REPORT.md](eval/NOTES_REPORT.md) and [eval/REPORT.md](eval/REPORT.md): evaluation scores
