@@ -1,4 +1,4 @@
-"""Reporting rules in one place. Every constant here is a decision recorded in DECISIONS.md."""
+"""Reporting rules in one place."""
 
 from __future__ import annotations
 
@@ -14,19 +14,19 @@ AUDIT_DIR = DATA_DIR / "audit"
 DEFINITIONS_DIR = DATA_DIR / "definitions"
 OUT_DIR = ROOT / "out"
 
-# D-01: the extract date. Latest date in the file; follow-up statuses agree with it exactly.
+# the extract date. Latest date in the file; follow-up statuses agree with it exactly.
 AS_OF = date(2026, 1, 15)
 
-# D-02: a referral needs this many days before the extract to count in conversion rates.
+# a referral needs this many days before the extract to count in conversion rates.
 # Observed referral -> admission P90 is 41 days, max 71.
 MATURITY_DAYS = 60
 
-# D-08: funder export hides counts from 1 to 4.
+# funder export hides counts from 1 to 4.
 SMALL_CELL_THRESHOLD = 5
 
 FOLLOWUP_HORIZONS_MONTHS = (6, 12)
 
-# Agent execution limits (D-15).
+# Agent execution limits.
 QUERY_ROW_LIMIT = 500
 QUERY_TIMEOUT_SECONDS = 5.0
 

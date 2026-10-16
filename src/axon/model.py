@@ -64,7 +64,7 @@ def _residents(raw: pd.DataFrame, as_of: date) -> pd.DataFrame:
     r = raw.drop(columns=["staff_note"]).copy()
 
     r["admitted"] = r["admission_date"].notna() & (r["admission_date"] <= ts_as_of)
-    # D-07: someone admitted without an intake date still passed intake.
+    # someone admitted without an intake date still passed intake.
     r["reached_intake"] = r["intake_date"].notna() | r["admitted"]
     r["in_residence"] = r["current_status"].isin(IN_RESIDENCE_STATUSES)
     r["left_house"] = r["current_status"].isin(LEFT_HOUSE_STATUSES)
@@ -81,7 +81,7 @@ def _residents(raw: pd.DataFrame, as_of: date) -> pd.DataFrame:
         index=r.index,
     ).replace({"": None})
 
-    # Stage timings. Pairs with a negative gap are data errors and are left out (D-07).
+    # Stage timings. Pairs with a negative gap are data errors and are left out.
     ref_to_intake = _days(r["intake_date"], r["referral_date"])
     intake_to_adm = _days(r["admission_date"], r["intake_date"])
     r["days_referral_to_intake"] = ref_to_intake.where(ref_to_intake >= 0)
@@ -92,7 +92,7 @@ def _residents(raw: pd.DataFrame, as_of: date) -> pd.DataFrame:
     r["los_days"] = _days(r["discharge_date"], r["admission_date"]).where(r["left_house"])
     r["days_in_house_so_far"] = _days(pd.Series(ts_as_of, index=r.index), r["admission_date"]).where(r["in_residence"])
 
-    # D-06: estimate missing discharge dates as admission + median early-leaver stay.
+    # estimate missing discharge dates as admission + median early-leaver stay.
     early = r["completion_group"].eq("early_leaver") & r["los_days"].notna()
     estimated_stay = float(r.loc[early, "los_days"].median()) if early.any() else 0.0
     needs_estimate = r["left_house"] & r["discharge_date"].isna() & r["admission_date"].notna()
@@ -117,7 +117,7 @@ def _followups(residents: pd.DataFrame, as_of: date) -> pd.DataFrame:
 
     A follow-up is due when discharge date + horizon is on or before the extract date.
     If the discharge date is missing but an outcome was recorded, the record itself
-    says it was due, so it is counted (D-07).
+    says it was due, so it is counted.
     """
     ts_as_of = pd.Timestamp(as_of)
     left = residents[residents["left_house"]]

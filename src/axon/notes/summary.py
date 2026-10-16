@@ -1,4 +1,4 @@
-"""Structured fields from staff notes, as metrics: who has what, out of whom (D-24, D-29).
+"""Structured fields from staff notes, as metrics: who has what, out of whom.
 
 Counts people (not notes) per category inside the group the field applies to, so every number
 has its denominator. Values are AI-assisted (rules plus a self-hosted model) and labelled so.

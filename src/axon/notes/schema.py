@@ -1,4 +1,4 @@
-"""What can be taken from a staff note, and for whom (D-24).
+"""What can be taken from a staff note, and for whom.
 
 Which fields apply depends on where the person is: a referral that was never admitted can only
 yield a referral status; someone in the house can yield risk flags and engagement; someone who

@@ -1,4 +1,4 @@
-"""Claude reads redacted notes and fills the fixed schema, quoting its evidence (D-24).
+"""The self-hosted model reads redacted notes and fills the fixed schema, quoting its evidence.
 
 Guardrails:
 - the model sees only the redacted note and which fields apply; never a name, ID or date of birth

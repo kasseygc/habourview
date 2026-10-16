@@ -1,4 +1,4 @@
-"""Turn a validated spec into one parameterised, read-only SELECT (D-11).
+"""Turn a validated spec into one parameterised, read-only SELECT.
 
 Identifiers come only from the registry. Every user-influenced value is a bound parameter.
 """

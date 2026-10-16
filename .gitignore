@@ -11,3 +11,6 @@ data/definitions/
 out/
 .claude/
 data/reviews/
+
+# Personal notes, write-up drafts and the scripts that build them
+private/

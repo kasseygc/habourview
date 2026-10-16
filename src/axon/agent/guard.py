@@ -1,4 +1,4 @@
-"""Second line of defence: check the SQL itself before it runs (D-15).
+"""Second line of defence: check the SQL itself before it runs.
 
 The compiler already produces safe SQL. This guard assumes it might not, and rejects
 anything that is not a single SELECT over the agent's tables using allow-listed functions,

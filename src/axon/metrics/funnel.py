@@ -1,4 +1,4 @@
-"""Referral -> intake -> admission for one fiscal-year referral cohort (D-02, D-03).
+"""Referral -> intake -> admission for one fiscal-year referral cohort.
 
 Conversion rates and stage timings use only referrals that had MATURITY_DAYS to progress
 before the extract date. Later referrals are reported separately as "too recent to judge".

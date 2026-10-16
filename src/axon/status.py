@@ -1,4 +1,4 @@
-"""The status strip: four operational facts for today (D-23).
+"""The status strip: four operational facts for today.
 
 Shown as neutral numbers. Red is reserved for a real breach in recorded data (more residents than
 beds); nothing here is a warning about data quality, which the dashboard is not for.

@@ -1,4 +1,4 @@
-"""Follow-up outcomes for funders (D-09).
+"""Follow-up outcomes for funders.
 
 Denominator: every admitted resident who has left the house and whose follow-up date
 has passed, including early leavers. Nobody is dropped for being unreachable.

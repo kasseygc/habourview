@@ -1,4 +1,4 @@
-"""Run the evaluation set and score it (D-19).
+"""Run the evaluation set and score it.
 
     uv run axon eval                 # replay recorded model answers (offline, deterministic)
     uv run axon eval --mode record   # call the model, record answers, then score

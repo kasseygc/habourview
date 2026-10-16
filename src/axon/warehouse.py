@@ -1,4 +1,4 @@
-"""One DuckDB file per house (D-14). Built here; opened read-only everywhere else."""
+"""One DuckDB file per house. Built here; opened read-only everywhere else."""
 
 from __future__ import annotations
 

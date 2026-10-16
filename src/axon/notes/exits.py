@@ -1,4 +1,4 @@
-"""How each stay ended (completion vs discharge) and where people went next (D-28).
+"""How each stay ended (completion vs discharge) and where people went next.
 
 Exit type uses the recorded discharge reason first. Only when the reason is "other" or blank do
 the staff notes fill it in, and such rows are marked `exit_from_notes` so they can be shown, and

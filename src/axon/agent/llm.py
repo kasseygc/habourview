@@ -1,8 +1,8 @@
-"""The one place that talks to a language model, with recorded replays for offline, deterministic runs (D-20).
+"""The one place that talks to a language model, with recorded replays for offline, deterministic runs.
 
 Default: a self-hosted open model (Google Gemma 3 12B) served by Ollama on this machine. Nothing
 leaves the computer. In production the same open model runs in Axon's own AWS account in Canada
-(ca-central-1), so no outside company processes the text (D-21). A hosted-API client is kept only
+(ca-central-1), so no outside company processes the text. A hosted-API client is kept only
 to show the swap point; it is off unless explicitly chosen.
 
 Modes (env AXON_LLM_MODE):

@@ -1,4 +1,4 @@
-"""Run a checked query against one house's file, read-only, with limits (D-14, D-15).
+"""Run a checked query against one house's file, read-only, with limits.
 
 Even if the compiler and the guard were both bypassed, this connection cannot write,
 cannot read any other file, cannot load extensions and cannot change those settings.

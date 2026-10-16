@@ -1,4 +1,4 @@
-"""Staff notes -> structured findings with a review status (D-24, D-25).
+"""Staff notes -> structured findings with a review status.
 
 Review status:
   agreed        rules and model found the same thing (referral, discharge)

@@ -1,12 +1,10 @@
 # Harbourview House analytics
 
 A take-home for Axon: a director's status board and funder report for a fictional recovery home
-(Task A), staff notes read into structured fields with a review queue, a prototype that answers
+(Task A), staff notes read into structured fields, a prototype that answers
 plain-English questions with checked, read-only queries (Task B), and short written answers
-(Task C). All data is synthetic.
+(Task C). All data is synthetic. The one-page write-up and Task C answers are submitted separately.
 
-- [WRITEUP.md](WRITEUP.md): one-page summary and Task C answers
-- [DECISIONS.md](DECISIONS.md): every decision, the options considered, and why
 - [docs/architecture.md](docs/architecture.md): notes-to-fields and question-to-chart designs, safety, PHI, evaluation
 - [docs/Harbourview_design_and_reasoning.docx](docs/Harbourview_design_and_reasoning.docx): the design, with diagrams, for review
 - [docs/review/evaluation_review.xlsx](docs/review/evaluation_review.xlsx): the question set and labelled notes, to check
@@ -84,6 +82,6 @@ another's data, and it is not shown in the app.
 ## How AI was used
 
 I used Claude (Claude Code) as a pair programmer for this take-home. I made the decisions: every
-metric definition, design choice and trade-off in DECISIONS.md was laid out as options and chosen
-by me. Claude wrote much of the code and first drafts of the documents to those decisions; I
-reviewed, ran and changed them.
+metric definition, design choice and trade-off was laid out as options and chosen by me. Claude
+wrote much of the code and first drafts of the documents to those decisions; I reviewed, ran and
+changed them.

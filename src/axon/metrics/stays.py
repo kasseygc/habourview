@@ -1,4 +1,4 @@
-"""Length of stay for one fiscal-year admission cohort (D-04).
+"""Length of stay for one fiscal-year admission cohort.
 
 Finished stays and ongoing stays are reported separately. A Kaplan-Meier estimate
 combines them, treating ongoing stays as censored at the extract date.

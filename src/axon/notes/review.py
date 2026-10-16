@@ -1,4 +1,4 @@
-"""Staff decisions on note findings: confirm or reject, per house, append-only (D-25)."""
+"""Staff decisions on note findings: confirm or reject, per house, append-only."""
 
 from __future__ import annotations
 

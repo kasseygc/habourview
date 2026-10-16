@@ -1,4 +1,4 @@
-"""The structured intermediate: a JSON spec, its schema for the LLM, and its validation (D-11).
+"""The structured intermediate: a JSON spec, its schema for the LLM, and its validation.
 
 Validation runs in three layers:
 1. The JSON schema sent with the request constrains the model's output to allow-listed ids.

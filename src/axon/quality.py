@@ -1,4 +1,4 @@
-"""Data-quality checks. Every issue names the resident, the rule and how metrics treat it (D-07)."""
+"""Data-quality checks. Every issue names the resident, the rule and how metrics treat it."""
 
 from __future__ import annotations
 

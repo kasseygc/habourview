@@ -1,4 +1,4 @@
-"""Funder report: one self-contained HTML file, small counts hidden (D-08), printable to PDF.
+"""Funder report: one self-contained HTML file, small counts hidden, printable to PDF.
 
 The director's dashboard shows exact counts. This export is what leaves the house.
 """

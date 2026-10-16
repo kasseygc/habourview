@@ -1,4 +1,4 @@
-"""Append-only audit log: one JSON line per question (D-18).
+"""Append-only audit log: one JSON line per question.
 
 Records who asked, for which house, the redacted question, what ran and how long it took.
 Result values are never written here.

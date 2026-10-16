@@ -1,10 +1,10 @@
-"""Rule-based PHI redaction for staff notes and for questions typed into the agent (D-17).
+"""Rule-based PHI redaction for staff notes and for questions typed into the agent.
 
 Prototype scope: structured identifiers (phones, emails, health-card numbers, SINs, dates,
 resident IDs) and names that follow a relationship or role word ("brother Kevin",
 "probation officer J. Martel", "Mom (Linda)"). Production would add a self-hosted
 named-entity model (e.g. Microsoft Presidio) and the house's own directory of client and
-contact names, with human spot-checks (see WRITEUP.md, C2).
+contact names, with human spot-checks.
 
 Only the types of what was found are logged, never the values.
 """

@@ -1,4 +1,4 @@
-"""Score note extraction against eval/notes_gold.yaml (D-26).
+"""Score note extraction against eval/notes_gold.yaml.
 
     uv run axon notes-eval                 # replay recorded model answers
     uv run axon notes-eval --mode record   # call the model and record

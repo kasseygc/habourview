@@ -1,4 +1,4 @@
-"""Plain-language answers, written by templates from the query result (D-16).
+"""Plain-language answers, written by templates from the query result.
 
 The LLM never writes the answer text, so every number a user reads came from the executed query.
 """

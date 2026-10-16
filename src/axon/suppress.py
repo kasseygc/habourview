@@ -1,4 +1,4 @@
-"""Small-cell suppression for the funder export (D-08).
+"""Small-cell suppression for the funder export.
 
 Primary: any count from 1 to threshold-1 is shown as "<threshold".
 Secondary (complementary): if a group's total is published and exactly one cell is hidden,

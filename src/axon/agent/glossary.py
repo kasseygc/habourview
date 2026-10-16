@@ -1,4 +1,4 @@
-"""Words that sound like metrics but have no single meaning (D-13).
+"""Words that sound like metrics but have no single meaning.
 
 Each term lists the questions we ask and the concrete, catalogue-backed choices offered.
 Choices are never invented by the LLM. A chosen definition is saved for the house and

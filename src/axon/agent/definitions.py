@@ -1,4 +1,4 @@
-"""House definitions: the answers to clarifying questions, saved per house and versioned (D-13).
+"""House definitions: the answers to clarifying questions, saved per house and versioned.
 
 Stored as one JSON file per house. Every change appends a version (who, when, what);
 nothing is overwritten, so a chart can always say which definition it used.

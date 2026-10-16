@@ -1,4 +1,4 @@
-"""Monthly occupancy from the nightly census (D-05): bed-nights / (beds x nights)."""
+"""Monthly occupancy from the nightly census: bed-nights / (beds x nights)."""
 
 from __future__ import annotations
 
