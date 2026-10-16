@@ -19,10 +19,10 @@ ATTACKS = [
     "UPDATE residents SET current_status = 'alumni'",
     "DELETE FROM residents",
     "COPY residents TO 'leak.csv'",
-    "ATTACH 'data/warehouse/northshore.duckdb' AS ns",
+    "ATTACH 'data/warehouse/testhouse.duckdb' AS ns",
     "SELECT * FROM ns.residents LIMIT 1",
-    "SELECT * FROM read_csv('data/raw/northshore_residents.csv') LIMIT 5",
-    "SELECT * FROM 'data/raw/northshore_residents.csv' LIMIT 1",
+    "SELECT * FROM read_csv('data/raw/testhouse_residents.csv') LIMIT 5",
+    "SELECT * FROM 'data/raw/testhouse_residents.csv' LIMIT 1",
     "SELECT 1 FROM residents LIMIT 1; DELETE FROM residents",
     "SELECT getenv('HOME') FROM residents LIMIT 1",
     "SELECT * FROM dq_issues LIMIT 1",
@@ -44,8 +44,8 @@ def test_guard_blocks(sql):
 @pytest.mark.parametrize("sql", [
     "INSERT INTO residents SELECT * FROM residents LIMIT 1",
     "CREATE TABLE x AS SELECT 1",
-    "SELECT * FROM read_csv('data/raw/northshore_residents.csv') LIMIT 1",
-    "ATTACH 'data/warehouse/northshore.duckdb' AS ns",
+    "SELECT * FROM read_csv('data/raw/testhouse_residents.csv') LIMIT 1",
+    "ATTACH 'data/warehouse/testhouse.duckdb' AS ns",
     "SET enable_external_access = true",
     "COPY residents TO 'out/leak.csv'",
 ])
@@ -85,9 +85,9 @@ def test_every_compiled_spec_passes_the_guard_and_runs(spec):
 
 def test_spec_cannot_name_a_tenant():
     with pytest.raises(ValidationError):
-        QuerySpec.model_validate({"metric": "admissions", "tenant": "northshore"})
+        QuerySpec.model_validate({"metric": "admissions", "tenant": "testhouse"})
     with pytest.raises(ValidationError):
-        LLMReply.model_validate({"action": "answer", "tenant_id": "northshore",
+        LLMReply.model_validate({"action": "answer", "tenant_id": "testhouse",
                                  "spec": {"metric": "admissions"}})
 
 
@@ -114,10 +114,10 @@ def test_invalid_specs_are_rejected(bad):
 
 def test_same_spec_gives_each_house_only_its_own_data():
     q = compile_spec(QuerySpec.model_validate({"metric": "residents_now", "group_by": ["current_status"]}))
-    for tenant_id in ("harbourview", "northshore"):
+    for tenant_id in ("harbourview", "testhouse"):
         got = int(run_query(get_tenant(tenant_id), q.sql, q.params).frame["n"].sum())
         expected = int((load(get_tenant(tenant_id)).residents["current_status"] != "not_admitted").sum())
         assert got == expected
     hv = run_query(get_tenant("harbourview"), q.sql, q.params).frame
-    ns = run_query(get_tenant("northshore"), q.sql, q.params).frame
+    ns = run_query(get_tenant("testhouse"), q.sql, q.params).frame
     assert int(hv["n"].sum()) != int(ns["n"].sum())

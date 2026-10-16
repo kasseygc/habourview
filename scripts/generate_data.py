@@ -1,6 +1,6 @@
 """Generate a fictional house. Deterministic for a given seed.
 
-    uv run python scripts/generate_data.py                      # writes the Northshore tenant
+    uv run python scripts/generate_data.py                      # writes the generated test house
     uv run python scripts/generate_data.py --prefix XY --n 300 --capacity 30 --seed 1 --out data/raw/xy.csv
 """
 
@@ -16,11 +16,11 @@ from axon.synth import generate, to_csv_frame
 
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--prefix", default="NS")
+    p.add_argument("--prefix", default="GT")
     p.add_argument("--n", type=int, default=150)
     p.add_argument("--capacity", type=int, default=16)
     p.add_argument("--seed", type=int, default=7)
-    p.add_argument("--out", type=Path, default=RAW_DIR / "northshore_residents.csv")
+    p.add_argument("--out", type=Path, default=RAW_DIR / "testhouse_residents.csv")
     args = p.parse_args()
 
     g = generate(prefix=args.prefix, n=args.n, capacity=args.capacity, seed=args.seed)

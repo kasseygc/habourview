@@ -45,7 +45,7 @@ class Generated:
 
 
 def generate(
-    prefix: str = "NS",
+    prefix: str = "GT",
     n: int = 150,
     capacity: int = 16,
     seed: int = 7,

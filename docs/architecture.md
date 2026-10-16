@@ -77,7 +77,7 @@ Validation happens in layers, and each is tested on its own:
 1. **Schema.** The JSON schema sent with the request makes every id an enum. Filter values are
    enums per field. The model cannot output a field or value that isn't in the catalogue.
 2. **Strict parse.** Pydantic re-parses with extra fields forbidden. The spec has no tenant
-   field, so "use tenant northshore" has nowhere to go.
+   field, so "use tenant testhouse" has nowhere to go.
 3. **Per-metric rules.** For example, occupancy must be grouped by a time period; follow-up
    metrics need a 6- or 12-month filter; "residents now" cannot take a time window.
    An invalid spec gets one retry with the error, then a plain refusal.

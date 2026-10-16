@@ -25,15 +25,15 @@ def test_harbourview_issues_are_found_with_resident_ids(hv):
 def test_generator_is_deterministic_and_matches_committed_file():
     a, b = generate(seed=7), generate(seed=7)
     pd.testing.assert_frame_equal(a.frame, b.frame)
-    committed = pd.read_csv(RAW_DIR / "northshore_residents.csv", dtype=str, keep_default_na=False)
+    committed = pd.read_csv(RAW_DIR / "testhouse_residents.csv", dtype=str, keep_default_na=False)
     pd.testing.assert_frame_equal(to_csv_frame(a.frame).astype(str).reset_index(drop=True), committed)
-    assert json.loads((RAW_DIR / "northshore_manifest.json").read_text()) == a.manifest
+    assert json.loads((RAW_DIR / "testhouse_manifest.json").read_text()) == a.manifest
 
 
 def test_checks_find_every_planted_problem():
-    raw = read_residents(get_tenant("northshore").csv_path)
+    raw = read_residents(get_tenant("testhouse").csv_path)
     found = check(raw, build_model(raw)).groupby("rule")["resident_id"].apply(set).to_dict()
-    manifest = json.loads((RAW_DIR / "northshore_manifest.json").read_text())
+    manifest = json.loads((RAW_DIR / "testhouse_manifest.json").read_text())
     for rule, ids in manifest.items():
         if rule == "PHI-like note":
             continue
@@ -41,7 +41,7 @@ def test_checks_find_every_planted_problem():
 
 
 def test_generated_house_respects_capacity_before_estimates():
-    raw = read_residents(get_tenant("northshore").csv_path)
+    raw = read_residents(get_tenant("testhouse").csv_path)
     census = build_model(raw).nightly_census
     actual = census["residents"] - census["residents_estimated"]
     assert actual.max() <= 16

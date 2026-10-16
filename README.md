@@ -45,7 +45,7 @@ uv run axon eval --mode record --model claude-sonnet-5-5  # compare another mode
 ## What's where
 
 ```
-data/raw/            harbourview_residents.csv (given), northshore_residents.csv (generated)
+data/raw/            harbourview_residents.csv (given), testhouse_residents.csv (generated)
 src/axon/
   ingest.py          read and type-check a house's CSV
   model.py           build the shared tables: residents, followups, nightly_census
