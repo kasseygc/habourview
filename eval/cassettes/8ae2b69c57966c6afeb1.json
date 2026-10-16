@@ -1,0 +1,11 @@
+{
+  "key": "8ae2b69c57966c6afeb1",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Discharges in 2025 that weren't completions, by reason",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"discharges\", \"group_by\": [\"discharge_reason\"], \"filters\": [{\"field\": \"discharge_reason\", \"op\": \"not_in\", \"values\": [\"completed\"]}, {\"field\": \"length_of_stay_days\", \"op\": \"between\", \"values\": [1, 1000]}], \"time_window\": {\"preset\": \"fy2025\", \"start\": null, \"end\": null}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2671,
+  "output_tokens": 135,
+  "recorded_at": "2026-10-16T03:07:00+00:00"
+}

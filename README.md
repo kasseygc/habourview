@@ -24,7 +24,7 @@ Other commands:
 
 ```bash
 uv run pytest                              # 143 tests
-uv run axon eval                           # score the 44 evaluation questions from recordings
+uv run axon eval                           # score the 45 evaluation questions from recordings
 uv run axon notes-eval                     # score note extraction on 65 labelled notes
 uv run axon report --fy 2025               # write the funder report to out/
 uv run python scripts/generate_data.py     # regenerate the second house (seeded, deterministic)
@@ -43,11 +43,12 @@ ollama pull gemma3:12b       # Google Gemma 3, 12B, about 8 GB
 
 Without the model running, the app and both evaluations replay recorded answers from
 `eval/cassettes/`, so everything still works offline for the recorded questions. With it running,
-new questions are answered live (about 10 seconds each on a laptop) and recorded.
-`AXON_LLM_MODE` can be `auto` (default), `replay`, `record` or `live`.
+new questions are answered live (about 10 seconds each on a laptop). The app never saves what
+people type; only the evaluation commands record. `AXON_LLM_MODE` can be `auto` (default),
+`replay`, `record` or `live`.
 
 ```bash
-uv run axon eval --mode record          # re-run the 44 questions through the model
+uv run axon eval --mode record          # re-run the 45 questions through the model
 uv run axon notes-eval --mode record    # re-run the 70 labelled notes
 ```
 

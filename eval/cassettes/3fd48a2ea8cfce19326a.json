@@ -1,0 +1,11 @@
+{
+  "key": "3fd48a2ea8cfce19326a",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "What is the average entrance fee?",
+  "response_text": "{\"action\":\"decline\",\"spec\":null,\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":\"out_of_scope\"}",
+  "stop_reason": "stop",
+  "input_tokens": 2662,
+  "output_tokens": 33,
+  "recorded_at": "2026-10-16T03:08:41+00:00"
+}

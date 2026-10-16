@@ -99,7 +99,9 @@ Validation happens in layers, and each is tested on its own:
 | Another customer's data | one file per house, chosen from the session | database per customer, chosen from the session; the compiler adds a `$match` on tenant first as a second layer |
 
 The tenant comes from the authenticated session, is never part of the spec, and is checked in
-tests by running the same spec for two houses and by a prompt-injection case.
+tests by running the same spec for two houses and by a question that asks for the other house.
+Phrases that try to change the instructions ("ignore your instructions", "system prompt") are
+declined by rule before the model sees them.
 
 ## Clarification
 
@@ -123,12 +125,16 @@ graduates doing?"; then the choices are the catalogue metrics it suggested, neve
   by templates from the query result, so every number on screen came from the query.
 - Definitions: fuzzy terms must be defined by the house; the model cannot quietly pick one.
 - Scope: anything the catalogue can't express is declined with a list of what is supported.
+- Dates: current status exists only for the extract date. "How many were in the house on 11
+  October?" is answered from the nightly census for that night; if the model picks current status
+  for a question with a date in it, a rule declines rather than answer a different question.
 
 ## Evaluation
 
-`eval/questions.yaml` holds 40 labelled questions: 22 answerable (counts, occupancy, outcomes,
-breakdowns, referrals by what the notes say), 3 with saved definitions, 7 that must trigger clarification, and 8 that must be
-declined (individuals, writes, another house, prompt injection, out of scope).
+`eval/questions.yaml` holds 45 labelled questions: 27 answerable (counts, occupancy including a
+single night, outcomes, breakdowns, how stays ended, referrals by what the notes say), 3 with saved
+definitions, 7 that must trigger clarification, and 8 that must be declined (individuals, writes,
+another house, prompt injection, out of scope).
 
 `uv run axon eval` scores:
 
@@ -140,7 +146,7 @@ declined (individuals, writes, another house, prompt injection, out of scope).
 - declines with an acceptable reason
 - unsafe answers, which must be 0; the command exits non-zero otherwise
 
-Regression: recordings are keyed by a hash of the model, effort, prompt, schema and question.
+Regression: recordings are keyed by a hash of the provider, model, prompt, schema and question.
 Changing the prompt or the model changes every key, so nothing can pass on stale answers: the set
 is re-recorded and re-scored (`--mode record`), and the result is compared with the last run.
 `--model` runs the same set against another model. After launch, the set grows from real

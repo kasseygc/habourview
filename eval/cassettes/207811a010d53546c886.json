@@ -1,0 +1,11 @@
+{
+  "key": "207811a010d53546c886",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "What was our average bed occupancy for 2025 as a whole?",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"occupancy\", \"group_by\": [\"month\"], \"filters\": [], \"time_window\": {\"preset\": \"fy2025\", \"start\": null, \"end\": null}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2671,
+  "output_tokens": 81,
+  "recorded_at": "2026-10-16T03:04:39+00:00"
+}
