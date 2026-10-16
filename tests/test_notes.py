@@ -113,7 +113,7 @@ def test_note_quotes_never_reach_agent_tables(hv):
 def test_notes_show_most_waiting_referrals_are_closed(hv):
     flags = {f.key: f for f in board(hv)}
     assert flags["waiting"].value == "7"
-    assert "notes say 6 of these closed" in flags["waiting"].detail
+    assert flags["waiting"].detail == "notes say 6 closed, 1 open"
 
 
 def test_confirming_closures_updates_the_waiting_count(hv, tmp_path):
@@ -125,4 +125,5 @@ def test_confirming_closures_updates_the_waiting_count(hv, tmp_path):
         store.decide("harbourview", x.resident_id, "referral", x.note_referral, "confirm", "director")
     flags = {f.key: f for f in board(hv, store.decisions("harbourview"))}
     assert flags["waiting"].value == "1"
-    assert len(review_queue(hv, store.decisions("harbourview"))) == len(q) - len(recent)
+    queued = {f"{x.resident_id}|referral|{x.note_referral}" for x in recent.itertuples()} & set(q["key"]) if len(q) else set()
+    assert len(review_queue(hv, store.decisions("harbourview"))) == len(q) - len(queued)

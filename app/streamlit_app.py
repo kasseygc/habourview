@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-import html
-
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
@@ -26,7 +24,8 @@ from axon.metrics.stays import stays  # noqa: E402
 from axon.notes.review import ReviewStore  # noqa: E402
 from axon.notes.schema import NOTES_DISCLOSURE, label  # noqa: E402
 from axon.report.funder import render_html  # noqa: E402
-from axon.status import STATUS_ICON, board, review_queue  # noqa: E402
+from axon.status import STATUS_ICON, board  # noqa: E402
+from axon.notes.summary import headline, summarize as summarize_notes  # noqa: E402
 from axon.tenants import TENANTS, get_tenant  # noqa: E402
 from axon.warehouse import build_all, load  # noqa: E402
 
@@ -65,10 +64,9 @@ EXAMPLES = [
     "What percentage of residents were sober at 6 months?",
     "How many active residents do we have, by phase?",
 ]
-# Demo sign-in. In production the identity provider sets the house; nothing typed can change it.
-HOUSES = {"Harbourview House": Session("harbourview", "director@harbourview"),
-          "Northshore Youth Residence": Session("northshore", "director@northshore")}
-BADGE = {"red": "red", "amber": "orange", "green": "green"}
+# In production the identity provider sets the house; nothing typed can change it. The generated
+# test house exists only to prove isolation in the tests, so the app shows Harbourview alone.
+SESSION = Session("harbourview", "director@harbourview")
 
 
 @st.cache_resource
@@ -124,9 +122,8 @@ def rng(lo: float | None, hi: float | None) -> str:
 
 # ---------------------------------------------------------------- header
 ensure_built()
-head, house_col, fy_col, export_col = st.columns([4.2, 2, 1.2, 1.6], vertical_alignment="bottom")
-with house_col:
-    session = HOUSES[st.selectbox("House (demo sign-in)", list(HOUSES))]
+head, fy_col, export_col = st.columns([6, 1.3, 1.4], vertical_alignment="bottom")
+session = SESSION
 with fy_col:
     fy = FiscalYear(st.selectbox("Fiscal year", [2025, 2024], format_func=lambda y: f"FY{y}" + (" (Jul–Dec)" if y == 2024 else "")))
 tenant = get_tenant(session.tenant_id)
@@ -142,14 +139,16 @@ with export_col:
                        help="Counts from 1 to 4 are hidden. Print to PDF from the browser if needed.", width="stretch")
 
 # ---------------------------------------------------------------- status strip
-flags = [f for f in board(w, decisions) if f.key != "data"]
+flags = board(w, decisions)
 with st.container(key="strip"):
     for col, fl in zip(st.columns(len(flags), gap="small"), flags):
         with col:
-            st.markdown(f'<div class="lab">{fl.label}</div><div class="k-value">{fl.value}</div>', unsafe_allow_html=True)
-            st.markdown(f":{BADGE[fl.status]}-badge[:material/{STATUS_ICON[fl.status]}: {fl.badge}]")
+            st.markdown(f'<div class="lab">{fl.label}</div><div class="k-value">{fl.value}</div>'
+                        f'<div class="sub">{fl.detail}</div>', unsafe_allow_html=True)
+            if fl.status == "red":
+                st.markdown(f":red-badge[:material/{STATUS_ICON['red']}: {fl.badge}]")
 
-tab_flow, tab_occ, tab_out, tab_ask, tab_notes = st.tabs(["Flow", "Occupancy and stay", "Outcomes", "Ask", "Staff notes"])
+tab_flow, tab_occ, tab_out, tab_notes, tab_ask = st.tabs(["Flow", "Occupancy and stay", "Outcomes", "From staff notes", "Ask"])
 f = funnel(w.residents, fy, w.as_of)
 occ = monthly_occupancy(w.nightly_census, fy)
 s = stays(w.residents, fy)
@@ -301,29 +300,20 @@ with tab_ask:
         turns.append({"question": q, "result": agent.ask(q, session)})
         st.rerun()
 
-# ---------------------------------------------------------------- staff notes
+# ---------------------------------------------------------------- from staff notes
 with tab_notes:
-    st.caption(NOTES_DISCLOSURE + " Notes are redacted before anything reads them; every value quotes the words it came from.")
-    queue = review_queue(w, decisions)
-    c1, c2 = st.columns([3, 2], gap="medium")
-    with c1, st.container(border=True):
-        card_title(f"Review queue · {len(queue)} · risk flags first")
-        if queue.empty:
-            st.markdown(":green-badge[:material/check_circle: Up to date] Nothing waiting for review.")
-        for row in queue.head(12).itertuples():
-            a, b, c = st.columns([4, 1.4, 1.3], vertical_alignment="center")
-            tag = ":orange-badge[:material/warning: risk]" if row.field == "risk" else f":gray-badge[{row.field}]"
-            a.markdown(f"{tag} **{label(row.value)}** · {row.resident_id}  \n:gray[“{html.escape(row.quote)}” · {row.source}]")
-            if b.button("Confirm", key=f"ok_{session.tenant_id}_{row.key}"):
-                reviews.decide(session.tenant_id, row.resident_id, row.field, row.value, "confirm", session.user_id)
-                st.rerun()
-            if c.button("Reject", key=f"no_{session.tenant_id}_{row.key}"):
-                reviews.decide(session.tenant_id, row.resident_id, row.field, row.value, "reject", session.user_id)
-                st.rerun()
-        if len(queue) > 12:
-            st.caption(f"{len(queue) - 12} more in the queue.")
-    with c2, st.container(border=True):
-        card_title("What the notes add · people")
-        nf = w.note_findings
-        summary = nf.assign(v=nf["value"].map(label)).groupby(["field", "v"])["resident_id"].nunique().reset_index()
-        st.markdown(table(["Field", "Value", "People"], summary.values.tolist(), right_from=2), unsafe_allow_html=True)
+    hl = headline(w.residents, w.note_findings)
+    st.markdown('<div class="tiles" style="grid-template-columns:repeat(4,minmax(0,1fr))">' + "".join(
+        f'<div class="tile"><div class="lab">{k}</div><div class="val">{n}<span class="unit"> of {d}</span></div>'
+        f'<div class="sub">in the house now</div></div>' for k, (n, d) in hl.items()) + "</div>", unsafe_allow_html=True)
+    groups = summarize_notes(w.residents, w.note_findings)
+    cols = st.columns(2, gap="medium")
+    for i, g in enumerate(groups):
+        with cols[i % 2], st.container(border=True):
+            card_title(f"{g.name} · {g.people} people · {g.with_finding} with a usable note")
+            rows = [[fl, label(v), n, f"{sh:.0%}"] for fl, v, n, sh in g.table.itertuples(index=False)]
+            st.markdown(table(["Field", "Category", "People", "Share"], rows or [["–", "nothing found", 0, "–"]], right_from=2),
+                        unsafe_allow_html=True)
+    foot(NOTES_DISCLOSURE + " Notes are redacted before anything reads them, and each value must quote the words it "
+         "came from. Shares are out of everyone in the group, including people with no usable note."
+         + (" No note in this file mentions a pass; the field is tested on labelled examples." if hl["Passes mentioned"][0] == 0 else ""))

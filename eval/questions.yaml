@@ -122,6 +122,27 @@
   kind: answer
   spec: {metric: referrals_by_note, group_by: [note_referral], time_window: {preset: fy2025}, chart: bar}
 
+- id: x10
+  category: exits
+  question: How did stays end for people admitted in 2025?
+  kind: answer
+  spec: {metric: stay_outcomes, group_by: [exit_type], time_window: {preset: fy2025}, chart: bar}
+- id: x11
+  category: exits
+  question: Where did people go after leaving the house?
+  kind: answer
+  spec: {metric: discharges, group_by: [destination], chart: bar}
+- id: x12
+  category: operators
+  question: Discharges in 2025 that weren't completions, by reason
+  kind: answer
+  spec: {metric: discharges, group_by: [discharge_reason], filters: [{field: discharge_reason, op: not_in, values: [completed]}], time_window: {preset: fy2025}, chart: bar}
+- id: x13
+  category: operators
+  question: How many people who left in 2025 stayed between 30 and 90 days?
+  kind: answer
+  spec: {metric: discharges, filters: [{field: length_of_stay_days, op: between, values: [30, 90]}], time_window: {preset: fy2025}, chart: bar}
+
 - id: q01
   category: clarify
   question: What percentage of residents were sober at 6 months?

@@ -1,0 +1,11 @@
+{
+  "key": "6539e42060a06922b8e8",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "How many admissions did we have each month in 2025?",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"admissions\",\"group_by\":[\"month\"],\"filters\":[],\"time_window\":{\"preset\":\"fy2025\",\"start\":null,\"end\":null},\"chart\":\"bar\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 2449,
+  "output_tokens": 65,
+  "recorded_at": "2026-10-16T02:29:54+00:00"
+}

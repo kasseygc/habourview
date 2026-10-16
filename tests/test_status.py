@@ -1,21 +1,13 @@
 from __future__ import annotations
 
 from axon.status import board
-from axon.tenants import get_tenant
-from axon.warehouse import load
 
 
-def test_harbourview_status_board(hv):
+def test_harbourview_status_strip_is_neutral(hv):
     flags = {f.key: f for f in board(hv)}
-    assert flags["beds"].value == "15 / 24" and flags["beds"].status == "amber"
+    assert list(flags) == ["beds", "waiting", "calls", "missing"]
+    assert flags["beds"].value == "15 / 24" and flags["beds"].detail == "9 beds open"
     assert flags["waiting"].value == "7"
-    assert flags["calls"].value == "14" and flags["calls"].status == "green"
-    assert flags["missing"].value == "4" and flags["missing"].status == "amber"
-    assert all(f.status in {"red", "amber", "green"} for f in flags.values())
-    assert all(f.action for f in flags.values() if f.status != "green")
-
-
-def test_estimate_driven_over_capacity_is_not_red():
-    flags = {f.key: f for f in board(load(get_tenant("northshore")))}
-    assert "estimated" in flags["data"].detail
-    assert flags["data"].status == "amber"
+    assert flags["calls"].value == "14"
+    assert flags["missing"].value == "4"
+    assert all(f.status == "neutral" and f.badge is None for f in flags.values())
