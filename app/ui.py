@@ -74,6 +74,8 @@ CSS = """
 .ax-tile { background: #fff; border: 1px solid #eceaf2; border-radius: 12px; padding: .8rem 1rem; }
 [data-testid="stVerticalBlockBorderWrapper"] { background: #fff; border-radius: 12px !important; border-color: #eceaf2 !important; margin-bottom: .8rem; }
 .ax-lab { font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; color: #7e7d91; }
+.ax-tag { display: inline-block; margin-left: .5rem; font-size: .66rem; letter-spacing: .05em; border-radius: 999px;
+          padding: .05rem .5rem; background: #eceaf2; color: #54586b; vertical-align: 1px; }
 </style>
 """
 
@@ -84,19 +86,24 @@ def info(text: str) -> str:
             f'<span class="ax-tip" role="tooltip">{escape(text)}</span></span>')
 
 
-def title_row(title: str, tip: str | None = None) -> str:
-    return f'<div class="ax-ct"><span>{title}</span>{info(tip) if tip else ""}</div>'
+def tag(text: str) -> str:
+    """A small grey pill, e.g. "Now" on figures that don't follow the fiscal year."""
+    return f'<span class="ax-tag">{escape(text)}</span>'
 
 
-def card(title: str, body: str, tip: str | None = None) -> str:
-    return f'<div class="ax-card">{title_row(title, tip)}{body}</div>'
+def title_row(title: str, tip: str | None = None, label: str | None = None) -> str:
+    return f'<div class="ax-ct"><span>{title}{tag(label) if label else ""}</span>{info(tip) if tip else ""}</div>'
+
+
+def card(title: str, body: str, tip: str | None = None, label: str | None = None) -> str:
+    return f'<div class="ax-card">{title_row(title, tip, label)}{body}</div>'
 
 
 def sub(text: str, top: str = ".6rem") -> str:
     return f'<div class="ax-sub" style="margin-top:{top}">{text}</div>'
 
 
-def strip(items: list[tuple[str, str, str, str, str | None]]) -> str:
+def strip(items: list[tuple[str, str, str, str, str | None]], label: str | None = None) -> str:
     """(icon, colour, value, label, tip). A label's second line, after a newline, is drawn lighter."""
     def text(label: str) -> str:
         first, _, second = label.partition("\n")
@@ -107,7 +114,8 @@ def strip(items: list[tuple[str, str, str, str, str | None]]) -> str:
         f'{ICONS[icon]}</svg></div><div style="min-width:0"><div class="ax-sv">{escape(v)}</div>'
         f'<div class="ax-sl">{text(l)}</div></div>{info(tip) if tip else ""}</div>'
         for icon, c, v, l, tip in items)
-    return f'<div class="ax-strip">{cells}</div>'
+    head = f'<div class="ax-lab" style="margin-top:.4rem">{escape(label)}</div>' if label else ""
+    return f'{head}<div class="ax-strip">{cells}</div>'
 
 
 def tiles(items: list[tuple[str, str, str, str]], cols: int = 3) -> str:

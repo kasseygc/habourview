@@ -99,7 +99,7 @@ def build_sections(w: Warehouse, fy: FiscalYear) -> list[tuple[str, str]]:
     ))
 
     for h in (6, 12):
-        r = outcomes(w.followups, h)
+        r = outcomes(w.followups, h, fy)
         shown = suppress_counts({OUTCOME_LABELS[k]: v for k, v in r.counts.items()})
         rows = [[k, v] for k, v in shown.items()] + [["Everyone due", suppress_total(r.due_n)]]
         if rate_is_publishable(r.engaged, r.due_n) and rate_is_publishable(r.engaged + r.no_outcome, r.due_n):
@@ -110,7 +110,8 @@ def build_sections(w: Warehouse, fy: FiscalYear) -> list[tuple[str, str]]:
         span = "" if r.first_discharge is None else f" (left the house {r.first_discharge:%b %Y} to {r.last_discharge:%b %Y})"
         sections.append((
             f"{h}-month follow-up",
-            f"<p>Everyone whose {h}-month follow-up date has passed{span}, including people who left early. "
+            f"<p>Everyone who left the house in {fy.label} and whose {h}-month follow-up date has passed{span}, "
+            "including people who left early. "
             f"Nobody is left out for being hard to reach. {headline}</p>"
             + _table(["Outcome", "People"], rows),
         ))

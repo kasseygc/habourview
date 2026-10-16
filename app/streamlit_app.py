@@ -103,7 +103,7 @@ show(ui.strip([
      flags["waiting"].tip),
     ("phone", ui.ORANGE, flags["calls"].value, "calls due in 30 days", None),
     ("file", ui.VIOLET, flags["missing"].value, "follow-ups not recorded", None),
-]))
+], label=f"Now, {w.as_of:%d %b %Y}"))
 if flags["beds"].status == "red":
     st.markdown(f":red-badge[:material/error: {flags['beds'].badge}: {flags['beds'].detail}]")
 
@@ -111,7 +111,16 @@ tab_flow, tab_occ, tab_out, tab_notes, tab_ask = st.tabs(["Flow", "Occupancy", "
 f = funnel(w.residents, fy, w.as_of)
 occ = monthly_occupancy(w.nightly_census, fy)
 s = stays(w.residents, fy)
-o6, o12 = outcomes(w.followups, 6), outcomes(w.followups, 12)
+o6, o12 = outcomes(w.followups, 6, fy), outcomes(w.followups, 12, fy)
+TOO_FEW = 20  # below this many people due, a follow-up rate is shown but marked "too few to judge"
+
+
+def engaged_range(r) -> str:
+    return "–" if r.due_n < TOO_FEW else f"{100 * r.engaged_worst_case:.0f}–{100 * r.engaged_best_case:.0f}"
+
+
+def due_note(r) -> str:
+    return f"{r.due_n} due, too few to judge" if r.due_n < TOO_FEW else f"worst to best case, {r.due_n} due"
 
 # ---------------------------------------------------------------- flow
 with tab_flow:
@@ -176,10 +185,8 @@ with tab_out:
     completed = int(ex.get("completed", 0))
     show(ui.tiles([
         ("Completed", pct(completed, len(cohort)), " %", f"{completed} of {len(cohort)} admitted"),
-        ("Engaged at 6 months", f"{100 * o6.engaged_worst_case:.0f}–{100 * o6.engaged_best_case:.0f}", " %",
-         f"worst to best case, {o6.due_n} due"),
-        ("Engaged at 12 months", f"{100 * o12.engaged_worst_case:.0f}–{100 * o12.engaged_best_case:.0f}", " %",
-         f"{o12.due_n} due, too few to judge" if o12.due_n < 20 else f"worst to best case, {o12.due_n} due"),
+        ("Engaged at 6 months", engaged_range(o6), " %" if o6.due_n >= TOO_FEW else "", due_note(o6)),
+        ("Engaged at 12 months", engaged_range(o12), " %" if o12.due_n >= TOO_FEW else "", due_note(o12)),
     ]))
     exit_parts = [("Completed", int(ex.get("completed", 0)), ui.SAGE), ("Transferred", int(ex.get("transferred", 0)), ui.BLUE),
                   ("Left by choice", int(ex.get("left_by_choice", 0)), ui.ORANGE),
@@ -204,25 +211,31 @@ with tab_out:
         parts = [("Engaged in recovery", c["engaged_in_recovery"], ui.SAGE), ("Lost to follow-up", c["lost_to_follow_up"], ui.GREY_1),
                  ("Unknown", c["unknown"], ui.GREY_2), ("Not recorded", c["not_recorded"], ui.GREY_3),
                  ("Relapse reported", c["relapse_reported"], ui.ORANGE)]
+        tip = (f"Everyone who left the house in {fy.label} and whose follow-up date has passed, including people who "
+               "left early. Worst case: nobody we couldn't reach is engaged. Best case: all of them are. Never reported "
+               "only among people reached. Follow-ups recorded for someone with no discharge date can't be placed in "
+               "a year.")
+        if not r.due_n:
+            show(ui.card(f"{r.horizon_months}-month follow-up", ui.sub(f"Nobody who left in {fy.label} is due yet.", "0"), tip=tip))
+            continue
         worst, best = 100 * r.engaged_worst_case, 100 * r.engaged_best_case
-        span = (worst, best, f"Engaged: {worst:.0f}% (worst case) to {best:.0f}% (best case)")
+        span = (worst, best, f"Engaged: {worst:.0f}% (worst case) to {best:.0f}% (best case)") if r.due_n >= TOO_FEW else None
         show(ui.card(f"{r.horizon_months}-month follow-up", ui.seg_bar(parts, span) +
-                     ui.sub(f"{r.due_n} people due" + (", too few to judge" if r.due_n < 20 else "")),
-                     tip="Everyone whose follow-up date has passed counts, including people who left early; all years "
-                         "pooled. Worst case: nobody we couldn't reach is engaged. Best case: all of them are. Never "
-                         "reported only among people reached."))
+                     ui.sub(f"{r.due_n} people who left in {fy.label} are due" + (", too few to judge" if r.due_n < TOO_FEW else "")),
+                     tip=tip))
 
 # ---------------------------------------------------------------- notes
 with tab_notes:
     hl = headline(w.residents, w.note_findings)
     show(ui.tiles([(k, str(n), f" of {d}", "in the house now") for k, (n, d) in hl.items()], cols=4))
-    groups = summarize_notes(w.residents, w.note_findings)
+    groups = summarize_notes(w.residents, w.note_findings, fy)
     cols = st.columns(2, gap="medium")
     for i, g in enumerate(groups):
         rows = [(label(v), n, FIELD_COLOR.get(fl, ui.GREY_2), f"{n} ({sh:.0%})") for fl, v, n, sh in g.table.itertuples(index=False)]
         with cols[i % 2]:
+            who = f"{g.people} people" + (f" ({'left' if g.name == 'Left early' else 'referred'} in {fy.label})" if g.by_year else "")
             show(ui.card(g.name, (ui.hbars(rows, scale=g.people) if rows else ui.sub("Nothing found in these notes.", "0"))
-                         + ui.sub(f"{g.people} people"),
+                         + ui.sub(who), label=None if g.by_year else "Now",
                          tip=NOTES_DISCLOSURE + f" {g.with_finding} of {g.people} have a usable note."
                              + (" No note in this file mentions a pass." if g.name == "In the house now" and hl["Passes mentioned"][0] == 0 else "")))
 

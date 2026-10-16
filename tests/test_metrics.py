@@ -154,3 +154,12 @@ def test_outcomes_use_everyone_due_as_denominator(hv):
 def test_twelve_month_outcomes(hv):
     r = outcomes(hv.followups, 12)
     assert r.due_n == 11 and r.engaged == 1
+
+
+def test_outcomes_by_fiscal_year_place_people_by_discharge_date(hv):
+    from axon.config import FiscalYear
+    fy24, fy25 = outcomes(hv.followups, 6, FiscalYear(2024)), outcomes(hv.followups, 6, FiscalYear(2025))
+    assert (fy24.due_n, fy25.due_n) == (8, 41)
+    # Two follow-ups were recorded for people with no discharge date: only in the all-years total.
+    assert outcomes(hv.followups, 6).due_n == fy24.due_n + fy25.due_n + 2
+    assert round(fy25.engaged_worst_case, 2) == 0.46 and round(fy25.engaged_best_case, 2) == 0.85

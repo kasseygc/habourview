@@ -126,3 +126,13 @@ def test_confirming_findings_removes_them_from_the_review_queue(hv, tmp_path):
         store.decide("harbourview", x.resident_id, "referral", x.note_referral, "confirm", "director")
     queued = {f"{x.resident_id}|referral|{x.note_referral}" for x in recent.itertuples()} & set(q["key"]) if len(q) else set()
     assert len(review_queue(hv, store.decisions("harbourview"))) == len(q) - len(queued)
+
+
+def test_notes_about_people_who_left_follow_the_fiscal_year(hv):
+    from axon.config import FiscalYear
+    from axon.notes.summary import summarize
+    all_years = {g.name: g for g in summarize(hv.residents, hv.note_findings)}
+    fy25 = {g.name: g for g in summarize(hv.residents, hv.note_findings, FiscalYear(2025))}
+    assert fy25["In the house now"].people == all_years["In the house now"].people  # where people are now
+    assert not fy25["In the house now"].by_year and fy25["Referred, not admitted"].by_year
+    assert fy25["Referred, not admitted"].people == 64 < all_years["Referred, not admitted"].people

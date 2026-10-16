@@ -2,6 +2,8 @@
 
 Denominator: every admitted resident who has left the house and whose follow-up date
 has passed, including early leavers. Nobody is dropped for being unreachable.
+By fiscal year, people are placed by discharge date; a follow-up recorded for someone with no
+discharge date can't be placed in a year and counts only in the all-years total.
 "Engaged among those reached" is never computed: it is survivorship bias.
 """
 
@@ -11,6 +13,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+from axon.config import FiscalYear
 from axon.model import NO_OUTCOME_CATEGORIES, OUTCOME_CATEGORIES
 
 OUTCOME_LABELS = {
@@ -58,8 +61,11 @@ class OutcomeResult:
         return self.share(self.engaged + self.no_outcome)
 
 
-def outcomes(followups: pd.DataFrame, horizon_months: int) -> OutcomeResult:
+def outcomes(followups: pd.DataFrame, horizon_months: int, fy: FiscalYear | None = None) -> OutcomeResult:
+    """fy: only people who left the house in that fiscal year; None for all years."""
     f = followups[followups["horizon_months"] == horizon_months]
+    if fy is not None:
+        f = f[f["discharge_date"].between(pd.Timestamp(fy.start), pd.Timestamp(fy.end))]
     due = f[f["is_due"]]
     counts = {c: int((due["outcome"] == c).sum()) for c in OUTCOME_CATEGORIES}
     by_group = (
