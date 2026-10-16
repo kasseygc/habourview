@@ -172,7 +172,7 @@ METRICS: dict[str, Metric] = {
             base_where="is_due", date_column="discharge_date",
             dimensions=("outcome", "completion_group", "fee_status"),
             filters=("horizon", "outcome", "completion_group", "fee_status", "discharge_reason"),
-            required_filters=("horizon",),
+            required_filters=("horizon",), required_dimensions=("outcome",),
             charts=("stacked_bar", "bar", "table"),
         ),
         Metric(

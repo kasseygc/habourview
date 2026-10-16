@@ -1,0 +1,11 @@
+{
+  "key": "7a2bded027d7a86fa9c1",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Show referrals by quarter.",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"referrals\", \"group_by\": [\"quarter\"], \"filters\": [], \"time_window\": {\"preset\": \"all\", \"start\": null, \"end\": null}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2725,
+  "output_tokens": 77,
+  "recorded_at": "2026-10-16T04:34:19+00:00"
+}

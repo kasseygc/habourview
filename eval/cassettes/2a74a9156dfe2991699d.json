@@ -1,0 +1,11 @@
+{
+  "key": "2a74a9156dfe2991699d",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "How did stays end for people admitted in 2025?",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"stay_outcomes\", \"group_by\": [\"exit_type\"], \"filters\": [], \"time_window\": {\"preset\": \"fy2025\", \"start\": null, \"end\": null}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2734,
+  "output_tokens": 85,
+  "recorded_at": "2026-10-16T04:38:04+00:00"
+}

@@ -1,0 +1,11 @@
+{
+  "key": "c56dfcaede5785acb349",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "How many people were discharged in the first half of 2025, by reason?",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"discharges\", \"group_by\": [\"discharge_reason\"], \"filters\": [], \"time_window\": {\"preset\": \"custom\", \"start\": \"2025-01-01\", \"end\": \"2025-06-30\"}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2739,
+  "output_tokens": 99,
+  "recorded_at": "2026-10-16T04:34:27+00:00"
+}

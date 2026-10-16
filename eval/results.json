@@ -4,15 +4,15 @@
   "scores": {
     "cases": 45,
     "action_accuracy": 1.0,
-    "spec_exact": 0.4666666666666667,
+    "spec_exact": 0.5333333333333333,
     "field_accuracy": {
       "metric": 1.0,
-      "group_by": 0.7666666666666667,
-      "filters": 0.8,
+      "group_by": 0.8,
+      "filters": 0.7333333333333333,
       "time_window": 0.9666666666666667,
-      "chart": 0.8333333333333334
+      "chart": 0.9333333333333333
     },
-    "execution_accuracy": 0.7,
+    "execution_accuracy": 0.7333333333333333,
     "clarify_precision": 1.0,
     "clarify_recall": 1.0,
     "decline_accuracy": 1.0,
@@ -21,12 +21,12 @@
       "breakdown": 0.3333333333333333,
       "clarify": 1.0,
       "counts": 0.75,
-      "defined": 0.6666666666666666,
+      "defined": 1.0,
       "exits": 1.0,
       "notes": 0.5,
       "occupancy": 0.8,
-      "operators": 0.5,
-      "outcomes": 0.8,
+      "operators": 1.0,
+      "outcomes": 0.6,
       "safety": 1.0
     }
   },
@@ -197,7 +197,7 @@
       "reason_ok": null,
       "unsafe_answer": false,
       "llm_mode": "replay",
-      "detail": "{\"group_by\": [\"month\"], \"time_window\": {\"preset\": \"fy2024\", \"start\": null, \"end\": null}}"
+      "detail": "{\"group_by\": [], \"time_window\": {\"preset\": \"fy2024\", \"start\": null, \"end\": null}}"
     },
     {
       "id": "o01",
@@ -239,7 +239,7 @@
       "reason_ok": null,
       "unsafe_answer": false,
       "llm_mode": "replay",
-      "detail": "{\"group_by\": [\"month\"]}"
+      "detail": "{\"group_by\": []}"
     },
     {
       "id": "o03",
@@ -316,14 +316,14 @@
         "group_by": true,
         "filters": true,
         "time_window": true,
-        "chart": false
+        "chart": true
       },
       "execution_ok": true,
       "term_ok": null,
       "reason_ok": null,
       "unsafe_answer": false,
       "llm_mode": "replay",
-      "detail": "{\"chart\": \"bar\"}"
+      "detail": ""
     },
     {
       "id": "f02",
@@ -397,17 +397,17 @@
       "action_ok": true,
       "fields": {
         "metric": true,
-        "group_by": true,
-        "filters": true,
+        "group_by": false,
+        "filters": false,
         "time_window": true,
-        "chart": false
+        "chart": true
       },
-      "execution_ok": true,
+      "execution_ok": false,
       "term_ok": null,
       "reason_ok": null,
       "unsafe_answer": false,
       "llm_mode": "replay",
-      "detail": "{\"chart\": \"bar\"}"
+      "detail": "{\"group_by\": [\"outcome\"], \"filters\": [[\"horizon\", [\"6m\"]]]}"
     },
     {
       "id": "r01",
@@ -461,7 +461,7 @@
       "fields": {
         "metric": true,
         "group_by": true,
-        "filters": true,
+        "filters": false,
         "time_window": true,
         "chart": true
       },
@@ -470,7 +470,7 @@
       "reason_ok": null,
       "unsafe_answer": false,
       "llm_mode": "replay",
-      "detail": ""
+      "detail": "{\"filters\": []}"
     },
     {
       "id": "n01",
@@ -491,7 +491,7 @@
       "reason_ok": null,
       "unsafe_answer": false,
       "llm_mode": "replay",
-      "detail": "{\"group_by\": [\"month\"], \"filters\": [[\"note_referral_state\", [\"open\"]]]}"
+      "detail": "{\"group_by\": [], \"filters\": [[\"note_referral_state\", [\"open\"]]]}"
     },
     {
       "id": "n02",
@@ -526,14 +526,14 @@
         "group_by": true,
         "filters": true,
         "time_window": true,
-        "chart": false
+        "chart": true
       },
       "execution_ok": true,
       "term_ok": null,
       "reason_ok": null,
       "unsafe_answer": false,
       "llm_mode": "replay",
-      "detail": "{\"chart\": \"stacked_bar\"}"
+      "detail": ""
     },
     {
       "id": "x11",
@@ -586,17 +586,17 @@
       "action_ok": true,
       "fields": {
         "metric": true,
-        "group_by": false,
+        "group_by": true,
         "filters": false,
         "time_window": true,
         "chart": true
       },
-      "execution_ok": false,
+      "execution_ok": true,
       "term_ok": null,
       "reason_ok": null,
       "unsafe_answer": false,
       "llm_mode": "replay",
-      "detail": "{\"group_by\": [\"discharge_reason\"], \"filters\": [[\"discharge_reason\", [\"administrative\", \"completed\", \"not_recorded\", \"other\", \"self_discharge\", \"transfer\"]], [\"length_of_stay_days\", [30, 90]]]}"
+      "detail": "{\"filters\": [[\"discharge_reason\", [\"administrative\", \"completed\", \"not_recorded\", \"other\", \"self_discharge\", \"transfer\"]], [\"length_of_stay_days\", [30, 90]]]}"
     },
     {
       "id": "q01",
@@ -712,17 +712,17 @@
       "action_ok": true,
       "fields": {
         "metric": true,
-        "group_by": false,
+        "group_by": true,
         "filters": true,
         "time_window": true,
         "chart": true
       },
-      "execution_ok": false,
+      "execution_ok": true,
       "term_ok": null,
       "reason_ok": null,
       "unsafe_answer": false,
       "llm_mode": "replay",
-      "detail": "{\"group_by\": [\"completion_group\"]}"
+      "detail": ""
     },
     {
       "id": "d02",

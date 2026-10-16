@@ -1,0 +1,11 @@
+{
+  "key": "79661455dabfe2b57ed5",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "How many active residents do we have, by phase?",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"residents_now\",\"group_by\":[\"current_status\"],\"filters\":[{\"field\":\"current_status\",\"op\":\"in\",\"values\":[\"phase_1\",\"phase_2\",\"phase_3\"]}],\"time_window\":{\"preset\":\"all\",\"start\":null,\"end\":null},\"chart\":\"bar\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 2760,
+  "output_tokens": 88,
+  "recorded_at": "2026-10-16T04:39:09+00:00"
+}

@@ -1,0 +1,11 @@
+{
+  "key": "10ebd75a8d92aede6769",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Compare the number of referrals in 2024 and 2025.",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"referrals\", \"group_by\": [], \"filters\": [], \"time_window\": {\"preset\": \"fy2024\", \"start\": null, \"end\": null}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2738,
+  "output_tokens": 79,
+  "recorded_at": "2026-10-16T04:35:06+00:00"
+}

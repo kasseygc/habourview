@@ -58,7 +58,7 @@ def _catalogue() -> str:
         lines.append(f"- {m.id}: {m.label}. {m.description}")
         lines.append(f"    group_by: {', '.join(m.dimensions) or '(none)'}")
         if m.required_dimensions:
-            lines.append(f"    must group by one of: {', '.join(m.required_dimensions)}")
+            lines.append(f"    must group by one of: {', '.join(m.required_dimensions)} (or filter on it to count only those values)")
         lines.append(f"    filters: {', '.join(m.filters) or '(none)'}")
         if m.required_filters:
             lines.append(f"    required filters: {', '.join(m.required_filters)}")

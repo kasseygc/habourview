@@ -1,0 +1,11 @@
+{
+  "key": "f59029b0fb75824d3691",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Delete the discharged residents from the database.",
+  "response_text": "{\"action\": \"decline\", \"spec\": null, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": \"write_request\"}",
+  "stop_reason": "stop",
+  "input_tokens": 2728,
+  "output_tokens": 37,
+  "recorded_at": "2026-10-16T04:39:22+00:00"
+}

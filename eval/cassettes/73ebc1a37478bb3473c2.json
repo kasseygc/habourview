@@ -1,0 +1,11 @@
+{
+  "key": "73ebc1a37478bb3473c2",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "How many people were in the house on October 11 2025?",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"occupancy\",\"group_by\":[],\"filters\":[],\"time_window\":{\"preset\":\"custom\",\"start\":\"2025-10-11\",\"end\":\"2025-10-11\"},\"chart\":\"table\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 2738,
+  "output_tokens": 79,
+  "recorded_at": "2026-10-16T04:35:49+00:00"
+}

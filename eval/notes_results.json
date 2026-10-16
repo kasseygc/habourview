@@ -1,6 +1,6 @@
 {
   "model": "gemma3:12b",
-  "mode": "record",
+  "mode": "replay",
   "cases": 70,
   "file_cases": 47,
   "systems": {
@@ -65,12 +65,12 @@
       },
       "varied": {
         "overall": {
-          "tp": 8,
+          "tp": 7,
           "fp": 1,
           "fn": 21,
-          "precision": 0.8888888888888888,
-          "recall": 0.27586206896551724,
-          "f1": 0.42105263157894735
+          "precision": 0.875,
+          "recall": 0.25,
+          "f1": 0.3888888888888889
         },
         "referral": {
           "tp": 1,
@@ -105,12 +105,12 @@
           "f1": 0.4615384615384615
         },
         "passes": {
-          "tp": 3,
+          "tp": 2,
           "fp": 1,
           "fn": 1,
-          "precision": 0.75,
-          "recall": 0.75,
-          "f1": 0.75
+          "precision": 0.6666666666666666,
+          "recall": 0.6666666666666666,
+          "f1": 0.6666666666666666
         },
         "destination": {
           "tp": 1,
@@ -123,12 +123,12 @@
       },
       "all": {
         "overall": {
-          "tp": 58,
+          "tp": 57,
           "fp": 1,
           "fn": 21,
-          "precision": 0.9830508474576272,
-          "recall": 0.7341772151898734,
-          "f1": 0.8405797101449277
+          "precision": 0.9827586206896551,
+          "recall": 0.7307692307692307,
+          "f1": 0.8382352941176471
         },
         "referral": {
           "tp": 13,
@@ -163,12 +163,12 @@
           "f1": 0.8444444444444443
         },
         "passes": {
-          "tp": 3,
+          "tp": 2,
           "fp": 1,
           "fn": 1,
-          "precision": 0.75,
-          "recall": 0.75,
-          "f1": 0.75
+          "precision": 0.6666666666666666,
+          "recall": 0.6666666666666666,
+          "f1": 0.6666666666666666
         },
         "destination": {
           "tp": 7,
@@ -183,12 +183,12 @@
     "model": {
       "file": {
         "overall": {
-          "tp": 37,
-          "fp": 2,
-          "fn": 13,
-          "precision": 0.9487179487179487,
-          "recall": 0.74,
-          "f1": 0.8314606741573033
+          "tp": 39,
+          "fp": 4,
+          "fn": 11,
+          "precision": 0.9069767441860465,
+          "recall": 0.78,
+          "f1": 0.8387096774193548
         },
         "referral": {
           "tp": 12,
@@ -199,12 +199,12 @@
           "f1": 0.9600000000000001
         },
         "discharge": {
-          "tp": 10,
-          "fp": 0,
-          "fn": 3,
-          "precision": 1.0,
-          "recall": 0.7692307692307693,
-          "f1": 0.8695652173913044
+          "tp": 11,
+          "fp": 1,
+          "fn": 2,
+          "precision": 0.9166666666666666,
+          "recall": 0.8461538461538461,
+          "f1": 0.8799999999999999
         },
         "risk": {
           "tp": 3,
@@ -231,22 +231,22 @@
           "f1": null
         },
         "destination": {
-          "tp": 1,
-          "fp": 1,
-          "fn": 5,
+          "tp": 2,
+          "fp": 2,
+          "fn": 4,
           "precision": 0.5,
-          "recall": 0.16666666666666666,
-          "f1": 0.25
+          "recall": 0.3333333333333333,
+          "f1": 0.4
         }
       },
       "varied": {
         "overall": {
-          "tp": 23,
-          "fp": 1,
+          "tp": 22,
+          "fp": 2,
           "fn": 6,
-          "precision": 0.9583333333333334,
-          "recall": 0.7931034482758621,
-          "f1": 0.8679245283018867
+          "precision": 0.9166666666666666,
+          "recall": 0.7857142857142857,
+          "f1": 0.8461538461538461
         },
         "referral": {
           "tp": 6,
@@ -281,12 +281,12 @@
           "f1": 0.7777777777777777
         },
         "passes": {
-          "tp": 4,
-          "fp": 0,
+          "tp": 3,
+          "fp": 1,
           "fn": 0,
-          "precision": 1.0,
+          "precision": 0.75,
           "recall": 1.0,
-          "f1": 1.0
+          "f1": 0.8571428571428571
         },
         "destination": {
           "tp": 1,
@@ -299,12 +299,12 @@
       },
       "all": {
         "overall": {
-          "tp": 60,
-          "fp": 3,
-          "fn": 19,
-          "precision": 0.9523809523809523,
-          "recall": 0.759493670886076,
-          "f1": 0.8450704225352113
+          "tp": 61,
+          "fp": 6,
+          "fn": 17,
+          "precision": 0.9104477611940298,
+          "recall": 0.782051282051282,
+          "f1": 0.8413793103448275
         },
         "referral": {
           "tp": 18,
@@ -315,12 +315,12 @@
           "f1": 0.972972972972973
         },
         "discharge": {
-          "tp": 12,
-          "fp": 0,
-          "fn": 4,
-          "precision": 1.0,
-          "recall": 0.75,
-          "f1": 0.8571428571428571
+          "tp": 13,
+          "fp": 1,
+          "fn": 3,
+          "precision": 0.9285714285714286,
+          "recall": 0.8125,
+          "f1": 0.8666666666666666
         },
         "risk": {
           "tp": 6,
@@ -339,20 +339,20 @@
           "f1": 0.7999999999999999
         },
         "passes": {
-          "tp": 4,
-          "fp": 0,
+          "tp": 3,
+          "fp": 1,
           "fn": 0,
-          "precision": 1.0,
+          "precision": 0.75,
           "recall": 1.0,
-          "f1": 1.0
+          "f1": 0.8571428571428571
         },
         "destination": {
-          "tp": 2,
-          "fp": 1,
-          "fn": 7,
-          "precision": 0.6666666666666666,
-          "recall": 0.2222222222222222,
-          "f1": 0.3333333333333333
+          "tp": 3,
+          "fp": 2,
+          "fn": 6,
+          "precision": 0.6,
+          "recall": 0.3333333333333333,
+          "f1": 0.42857142857142855
         }
       }
     },
@@ -360,11 +360,11 @@
       "file": {
         "overall": {
           "tp": 50,
-          "fp": 2,
+          "fp": 4,
           "fn": 0,
-          "precision": 0.9615384615384616,
+          "precision": 0.9259259259259259,
           "recall": 1.0,
-          "f1": 0.9803921568627451
+          "f1": 0.9615384615384615
         },
         "referral": {
           "tp": 12,
@@ -376,11 +376,11 @@
         },
         "discharge": {
           "tp": 13,
-          "fp": 0,
+          "fp": 1,
           "fn": 0,
-          "precision": 1.0,
+          "precision": 0.9285714285714286,
           "recall": 1.0,
-          "f1": 1.0
+          "f1": 0.962962962962963
         },
         "risk": {
           "tp": 3,
@@ -408,21 +408,21 @@
         },
         "destination": {
           "tp": 6,
-          "fp": 1,
+          "fp": 2,
           "fn": 0,
-          "precision": 0.8571428571428571,
+          "precision": 0.75,
           "recall": 1.0,
-          "f1": 0.923076923076923
+          "f1": 0.8571428571428571
         }
       },
       "varied": {
         "overall": {
-          "tp": 24,
-          "fp": 2,
+          "tp": 23,
+          "fp": 3,
           "fn": 5,
-          "precision": 0.9230769230769231,
-          "recall": 0.8275862068965517,
-          "f1": 0.8727272727272727
+          "precision": 0.8846153846153846,
+          "recall": 0.8214285714285714,
+          "f1": 0.8518518518518519
         },
         "referral": {
           "tp": 6,
@@ -457,12 +457,12 @@
           "f1": 0.8421052631578948
         },
         "passes": {
-          "tp": 4,
-          "fp": 1,
+          "tp": 3,
+          "fp": 2,
           "fn": 0,
-          "precision": 0.8,
+          "precision": 0.6,
           "recall": 1.0,
-          "f1": 0.888888888888889
+          "f1": 0.7499999999999999
         },
         "destination": {
           "tp": 1,
@@ -475,12 +475,12 @@
       },
       "all": {
         "overall": {
-          "tp": 74,
-          "fp": 4,
+          "tp": 73,
+          "fp": 7,
           "fn": 5,
-          "precision": 0.9487179487179487,
-          "recall": 0.9367088607594937,
-          "f1": 0.9426751592356688
+          "precision": 0.9125,
+          "recall": 0.9358974358974359,
+          "f1": 0.9240506329113924
         },
         "referral": {
           "tp": 18,
@@ -492,11 +492,11 @@
         },
         "discharge": {
           "tp": 15,
-          "fp": 0,
+          "fp": 1,
           "fn": 1,
-          "precision": 1.0,
+          "precision": 0.9375,
           "recall": 0.9375,
-          "f1": 0.967741935483871
+          "f1": 0.9375
         },
         "risk": {
           "tp": 6,
@@ -515,45 +515,38 @@
           "f1": 0.9411764705882353
         },
         "passes": {
-          "tp": 4,
-          "fp": 1,
+          "tp": 3,
+          "fp": 2,
           "fn": 0,
-          "precision": 0.8,
+          "precision": 0.6,
           "recall": 1.0,
-          "f1": 0.888888888888889
+          "f1": 0.7499999999999999
         },
         "destination": {
           "tp": 7,
-          "fp": 1,
+          "fp": 2,
           "fn": 2,
-          "precision": 0.875,
+          "precision": 0.7777777777777778,
           "recall": 0.7777777777777778,
-          "f1": 0.823529411764706
+          "f1": 0.7777777777777778
         }
       }
     }
   },
-  "rejected_quotes": 6,
+  "rejected_quotes": 5,
   "rejected_examples": [
-    {
-      "field": "destination",
-      "value": "moved_region",
-      "quote": "Moved to program in home region.",
-      "id": "g023",
-      "problem": "value does not belong to the field"
-    },
-    {
-      "field": "discharge",
-      "value": "unreachable",
-      "quote": "Discharged - see paper file",
-      "id": "g026",
-      "problem": "value does not belong to the field"
-    },
     {
       "field": "discharge",
       "value": "not_appropriate",
       "quote": "Spoke w/ probation officer [NAME] re: conditions.",
       "id": "g037",
+      "problem": "value does not belong to the field"
+    },
+    {
+      "field": "risk",
+      "value": "doing_well",
+      "quote": "Sister [NAME] dropped off clothes; res in good spirits.",
+      "id": "g038",
       "problem": "value does not belong to the field"
     },
     {
@@ -569,9 +562,16 @@
       "quote": "new admit - orientation done, house rules signed",
       "id": "g045",
       "problem": "value does not belong to the field"
+    },
+    {
+      "field": "discharge",
+      "value": "custody",
+      "quote": "Picked up by police on an old warrant.",
+      "id": "g062",
+      "problem": "value does not belong to the field"
     }
   ],
-  "rules_model_disagree": 29,
+  "rules_model_disagree": 32,
   "misses": {
     "rules": [
       {
@@ -788,7 +788,7 @@
         "missed": [
           [
             "discharge",
-            "peer_conflict"
+            "self_discharge"
           ]
         ],
         "extra": []
@@ -804,14 +804,14 @@
         "extra": []
       },
       {
-        "note": "DISCHARGED FOR REPEATED RULE VIOLATIONS (USE ON PREMISES).",
-        "missed": [
+        "note": "Graduated program. Attending weekly aftercare group.",
+        "missed": [],
+        "extra": [
           [
-            "discharge",
-            "rule_violations"
+            "destination",
+            "home_or_family"
           ]
-        ],
-        "extra": []
+        ]
       },
       {
         "note": "aftercare check-in by phone - doing well, employed",
@@ -819,10 +819,6 @@
           [
             "engagement",
             "aftercare_attending"
-          ],
-          [
-            "engagement",
-            "work"
           ]
         ],
         "extra": []
@@ -830,10 +826,6 @@
       {
         "note": "Moved to program in home region.",
         "missed": [
-          [
-            "destination",
-            "another_program"
-          ],
           [
             "discharge",
             "moved_region"
@@ -850,6 +842,16 @@
           ]
         ],
         "extra": []
+      },
+      {
+        "note": "Discharged - see paper file",
+        "missed": [],
+        "extra": [
+          [
+            "discharge",
+            "self_discharge"
+          ]
+        ]
       },
       {
         "note": "Incarcerated - outstanding warrant",
@@ -892,6 +894,16 @@
         "extra": []
       },
       {
+        "note": "Sister [NAME] dropped off clothes; res in good spirits.",
+        "missed": [
+          [
+            "engagement",
+            "doing_well"
+          ]
+        ],
+        "extra": []
+      },
+      {
         "note": "Mom ([NAME]) called asking about visiting hrs, call back [PHONE].",
         "missed": [],
         "extra": [
@@ -917,7 +929,7 @@
         "extra": [
           [
             "engagement",
-            "attending_groups"
+            "aftercare_planned"
           ]
         ]
       },
@@ -974,6 +986,16 @@
           ]
         ],
         "extra": []
+      },
+      {
+        "note": "Weekend pass approved for a family visit.",
+        "missed": [],
+        "extra": [
+          [
+            "passes",
+            "pass_taken"
+          ]
+        ]
       }
     ],
     "rules + model": [
@@ -984,6 +1006,26 @@
           [
             "destination",
             "home_or_family"
+          ]
+        ]
+      },
+      {
+        "note": "Graduated program. Attending weekly aftercare group.",
+        "missed": [],
+        "extra": [
+          [
+            "destination",
+            "home_or_family"
+          ]
+        ]
+      },
+      {
+        "note": "Discharged - see paper file",
+        "missed": [],
+        "extra": [
+          [
+            "discharge",
+            "self_discharge"
           ]
         ]
       },
@@ -1003,7 +1045,7 @@
         "extra": [
           [
             "engagement",
-            "attending_groups"
+            "aftercare_planned"
           ]
         ]
       },
@@ -1050,6 +1092,16 @@
           ]
         ],
         "extra": []
+      },
+      {
+        "note": "Weekend pass approved for a family visit.",
+        "missed": [],
+        "extra": [
+          [
+            "passes",
+            "pass_taken"
+          ]
+        ]
       },
       {
         "note": "Didn't come back from overnight pass; staff left a message.",

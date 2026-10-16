@@ -109,9 +109,10 @@ class QuerySpec(BaseModel):
         for g in self.group_by:
             if g not in m.dimensions:
                 raise ValueError(f"{self.metric} cannot be grouped by {g!r}; allowed: {list(m.dimensions)}")
-        if m.required_dimensions and not set(self.group_by) & set(m.required_dimensions):
-            raise ValueError(f"{self.metric} must be grouped by one of {list(m.required_dimensions)}")
         fields = [f.field for f in self.filters]
+        # A required grouping can be replaced by a filter on the same field ("lost to follow-up" only).
+        if m.required_dimensions and not set(self.group_by + fields) & set(m.required_dimensions):
+            raise ValueError(f"{self.metric} must be grouped or filtered by one of {list(m.required_dimensions)}")
         if len(set(fields)) != len(fields):
             raise ValueError("each filter field may appear once")
         for f in fields:
@@ -183,7 +184,7 @@ def apply_patch(spec: QuerySpec, patch: dict) -> QuerySpec:
     if "group_by" in patch:
         data["group_by"] = list(patch["group_by"])
     data["group_by"] = [g for g in data["group_by"] if g in m.dimensions][:MAX_GROUP_BY]
-    if m.required_dimensions and not set(data["group_by"]) & set(m.required_dimensions):
+    if m.required_dimensions and not set(data["group_by"] + [f["field"] for f in data["filters"]]) & set(m.required_dimensions):
         data["group_by"] = [m.required_dimensions[0], *data["group_by"]][:MAX_GROUP_BY]
     if "time_window" in patch:
         data["time_window"] = dict(patch["time_window"])

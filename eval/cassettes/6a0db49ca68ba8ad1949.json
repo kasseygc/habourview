@@ -1,0 +1,11 @@
+{
+  "key": "6a0db49ca68ba8ad1949",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "12-month outcomes for people who completed versus people who left early",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"followup_outcomes\", \"group_by\": [\"completion_group\"], \"filters\": [{\"field\": \"horizon\", \"op\": \"in\", \"values\": [\"12m\"]}], \"time_window\": {\"preset\": \"all\", \"start\": null, \"end\": null}, \"chart\": \"stacked_bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2734,
+  "output_tokens": 104,
+  "recorded_at": "2026-10-16T04:36:13+00:00"
+}
