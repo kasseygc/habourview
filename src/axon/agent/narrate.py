@@ -50,8 +50,11 @@ def narrate(spec: QuerySpec, df: pd.DataFrame) -> str:
             text += " The staff notes say: " + "; ".join(f"{label(k)} {v}" for k, v in by.items()) + "."
         return text
     if spec.metric == "residents_now":
+        total = int(df["n"].sum())
+        if "current_status" not in df.columns:
+            return f"{total} people as of the extract date."
         parts = ", ".join(f"{STATUS_LABELS.get(s, s)} {n}" for s, n in zip(df["current_status"], df["n"]))
-        return f"{int(df['n'].sum())} people as of the extract date ({parts})."
+        return f"{total} people as of the extract date ({parts})."
     return _counts(spec, df, m.label.lower())
 
 

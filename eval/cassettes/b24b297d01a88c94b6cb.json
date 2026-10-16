@@ -1,0 +1,11 @@
+{
+  "key": "b24b297d01a88c94b6cb",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "What share of people were engaged in recovery at their 6-month follow-up?",
+  "response_text": "{\"action\":\"answer\",\"spec\":{\"metric\":\"followup_engaged_rate\",\"group_by\":[\"completion_group\"],\"filters\":[{\"field\":\"horizon\",\"op\":\"in\",\"values\":[\"6m\"]}],\"time_window\":{\"preset\":\"all\",\"start\":null,\"end\":null},\"chart\":\"bar\"},\"unclear_terms\":[],\"candidate_metrics\":[],\"decline_reason\":null}",
+  "stop_reason": "stop",
+  "input_tokens": 2452,
+  "output_tokens": 80,
+  "recorded_at": "2026-10-16T02:46:33+00:00"
+}

@@ -14,10 +14,10 @@ def main(argv: list[str] | None = None) -> int:
     report.add_argument("--tenant", default="harbourview")
     report.add_argument("--fy", type=int, default=2025)
     ev = sub.add_parser("eval", help="Run the NL-to-spec evaluation set")
-    ev.add_argument("--mode", choices=["replay", "record", "live"], default="replay")
+    ev.add_argument("--mode", choices=["auto", "replay", "record", "live"], default="replay")
     ev.add_argument("--model", default=None)
     nev = sub.add_parser("notes-eval", help="Score staff-note extraction against eval/notes_gold.yaml")
-    nev.add_argument("--mode", choices=["replay", "record", "live"], default="replay")
+    nev.add_argument("--mode", choices=["auto", "replay", "record", "live"], default="replay")
     nev.add_argument("--model", default=None)
     args = parser.parse_args(argv)
 

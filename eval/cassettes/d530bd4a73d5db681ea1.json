@@ -1,0 +1,11 @@
+{
+  "key": "d530bd4a73d5db681ea1",
+  "provider": "ollama",
+  "model": "gemma3:12b",
+  "input_redacted": "Break down everyone we have admitted by their current status.",
+  "response_text": "{\"action\": \"answer\", \"spec\": {\"metric\": \"residents_now\", \"group_by\": [\"current_status\"], \"filters\": [], \"time_window\": {\"preset\": \"all\", \"start\": null, \"end\": null}, \"chart\": \"bar\"}, \"unclear_terms\": [], \"candidate_metrics\": [], \"decline_reason\": null}",
+  "stop_reason": "stop",
+  "input_tokens": 2445,
+  "output_tokens": 80,
+  "recorded_at": "2026-10-16T02:48:25+00:00"
+}

@@ -155,13 +155,12 @@ questions (redacted), with the declines and clarifications reviewed by a person 
   relationship word, a phone number, a resident ID) means the question is about a person, so it
   is declined before reaching the model. Answers are totals only; small counts are flagged in
   the director's view and hidden in the funder export.
-- **Where it runs:** the prototype calls the Anthropic API with synthetic, schema-only prompts.
-  For production I'd use Claude on Google Vertex AI's Montréal regional endpoint
-  (`northamerica-northeast1`), pinned to that endpoint, under Google Cloud's data processing
-  terms. Not Bedrock ca-central-1: current Claude models have no in-region inference there and
-  requests route to US regions. Not the Anthropic API directly: its residency setting offers US
-  or global only. For customers whose agreements allow no outside processor, a self-hosted
-  open model in Axon's Canadian environment, held to the same evaluation bar.
+- **Where it runs:** a self-hosted open model in Axon's own AWS account in Canada (ca-central-1).
+  Axon runs on AWS, so no outside company processes the text and no new processor agreements are
+  needed. Not Bedrock in ca-central-1 (current Claude models route to US regions), not the Anthropic
+  API (US or global only); Vertex AI's Montréal endpoint would work but adds a second cloud. The
+  prototype runs the same kind of model locally (Google Gemma 3 12B via Ollama), with output held to
+  the same JSON schema; nothing is sent anywhere and nothing is paid for.
 - **Law:** PIPEDA applies to Axon as a commercial service; it allows processors but Axon stays
   accountable and must be open about where data goes. Where a customer is a health information
   custodian under Ontario's PHIPA, Axon acts as its agent or electronic service provider and must

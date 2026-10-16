@@ -9,6 +9,7 @@ from axon.agent.compiler import compile_spec
 from axon.agent.executor import QueryTimeout, run_query
 from axon.agent.guard import UnsafeQuery, check_sql
 from axon.agent.registry import FILTERS, METRICS
+from axon.agent.narrate import narrate
 from axon.agent.spec import LLMReply, QuerySpec
 from axon.tenants import get_tenant
 from axon.warehouse import load
@@ -77,10 +78,15 @@ def _every_valid_spec():
 
 
 @pytest.mark.parametrize("spec", list(_every_valid_spec()), ids=lambda s: f"{s['metric']}-{'-'.join(s['group_by'])}")
-def test_every_compiled_spec_passes_the_guard_and_runs(spec):
-    q = compile_spec(QuerySpec.model_validate(spec))
+def test_every_compiled_spec_passes_the_guard_runs_and_narrates(spec):
+    parsed = QuerySpec.model_validate(spec)
+    q = compile_spec(parsed)
     check_sql(q.sql)
-    run_query(get_tenant("harbourview"), q.sql, q.params)
+    frame = run_query(get_tenant("harbourview"), q.sql, q.params).frame
+    for variant in (parsed, parsed.model_copy(update={"group_by": [g for g in parsed.group_by if g in METRICS[parsed.metric].required_dimensions][:1]})):
+        f = run_query(get_tenant("harbourview"), compile_spec(variant).sql, compile_spec(variant).params).frame
+        assert isinstance(narrate(variant, f), str)
+    assert isinstance(narrate(parsed, frame), str)
 
 
 def test_spec_cannot_name_a_tenant():

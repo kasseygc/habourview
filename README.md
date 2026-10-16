@@ -8,6 +8,8 @@ plain-English questions with checked, read-only queries (Task B), and short writ
 - [WRITEUP.md](WRITEUP.md): one-page summary and Task C answers
 - [DECISIONS.md](DECISIONS.md): every decision, the options considered, and why
 - [docs/architecture.md](docs/architecture.md): notes-to-fields and question-to-chart designs, safety, PHI, evaluation
+- [docs/Harbourview_design_and_reasoning.docx](docs/Harbourview_design_and_reasoning.docx): the design, with diagrams, for review
+- [docs/review/evaluation_review.xlsx](docs/review/evaluation_review.xlsx): the question set and labelled notes, to check
 - [eval/NOTES_REPORT.md](eval/NOTES_REPORT.md) and [eval/REPORT.md](eval/REPORT.md): evaluation scores
 
 ## Run it
@@ -24,22 +26,31 @@ Other commands:
 
 ```bash
 uv run pytest                              # 143 tests
-uv run axon eval                           # score the 40 evaluation questions from recordings
+uv run axon eval                           # score the 44 evaluation questions from recordings
 uv run axon notes-eval                     # score note extraction on 65 labelled notes
 uv run axon report --fy 2025               # write the funder report to out/
 uv run python scripts/generate_data.py     # regenerate the second house (seeded, deterministic)
 ```
 
-### Questions and the API key
+### The language model (free, local, nothing leaves the machine)
 
-The app and the evaluation work offline by replaying recorded model answers in
-`eval/cassettes/`. To ask new questions, or to re-record after changing the prompt or model,
-copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY`. `AXON_LLM_MODE` can be `auto`
-(default: use a recording if there is one, otherwise call the API), `replay`, `record` or `live`.
+The model step runs on an open model on your own computer, standing in for a model self-hosted in
+Axon's AWS account in Canada. No API key and no paid service are needed.
 
 ```bash
-uv run axon eval --mode record                            # re-record and re-score
-uv run axon eval --mode record --model claude-sonnet-5-5  # compare another model
+brew install ollama
+ollama serve                 # in its own terminal
+ollama pull gemma3:12b       # Google Gemma 3, 12B, about 8 GB
+```
+
+Without the model running, the app and both evaluations replay recorded answers from
+`eval/cassettes/`, so everything still works offline for the recorded questions. With it running,
+new questions are answered live (about 10 seconds each on a laptop) and recorded.
+`AXON_LLM_MODE` can be `auto` (default), `replay`, `record` or `live`.
+
+```bash
+uv run axon eval --mode record          # re-run the 44 questions through the model
+uv run axon notes-eval --mode record    # re-run the 70 labelled notes
 ```
 
 ## What's where
@@ -64,11 +75,11 @@ eval/                labelled questions, recordings, report
 tests/               metric edge cases, privacy, query safety, tenant isolation, agent flow
 ```
 
-## Sign-in (demo)
+## The generated test house
 
-The app has a demo sign-in to show role-based views: a director sees everything for their
-house; a funder sees only the published report with small counts hidden; a director of the
-second house sees only that house. In production the identity provider sets the house and role.
+`data/raw/testhouse_residents.csv` is invented by `scripts/generate_data.py` (seed 7). It is not part
+of the brief or the given data. It exists only so the tests can prove that one house can never query
+another's data, and it is not shown in the app.
 
 ## How AI was used
 
