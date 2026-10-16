@@ -216,3 +216,40 @@ def test_outcome_filter_counts_one_outcome(make_agent):
     agent, _ = make_agent({"lost": spec})
     r = agent.ask("How many people were lost to follow-up at 6 months?", HV)
     assert isinstance(r, Answer) and r.text == "15 people whose 6-month follow-up was due: lost to follow-up."
+
+
+def test_average_fee_is_asked_then_answered_with_the_saved_meaning(make_agent):
+    agent, stub = make_agent({"fee": answer({"metric": "entrance_fees", "chart": "bar"})})
+    r = agent.ask("What is the average entrance fee?", HV)
+    assert isinstance(r, Clarification) and r.term == "average_fee" and stub.calls == []
+    agent.define(HV, "average_fee", "charged")
+    r = agent.ask("What is the average entrance fee?", HV)
+    assert isinstance(r, Answer)
+    assert r.text.startswith("Average entrance fee $881 for 107 people charged")
+
+
+def test_what_notes_say_is_counts_and_redacted_phrases_never_who(make_agent):
+    spec = answer({"metric": "notes_mentions", "chart": "table",
+                   "filters": [{"field": "note_topic", "values": ["cravings"]}]})
+    agent, _ = make_agent({"cravings": spec})
+    r = agent.ask("What do the staff notes say about cravings?", HV)
+    assert isinstance(r, Answer)
+    assert "resident_id" not in r.frame.columns
+    assert r.sql.split("FROM")[0].replace("COUNT(DISTINCT resident_id)", "").count("resident_id") == 0  # counted, never returned
+    assert r.text == ("Staff notes mention cravings for 2 people. In the notes' words, redacted: "
+                      "“Some cravings reported”. Not yet confirmed by staff.")
+
+
+def test_a_word_defined_by_picking_a_measure_is_never_asked_about_again(make_agent):
+    # The loop found in the app: "why aren't the numbers higher" -> what do you mean by 'numbers'? ->
+    # pick "Admissions" -> the same question again, forever.
+    clarify = {"action": "clarify", "spec": None, "unclear_terms": ["numbers"],
+               "candidate_metrics": ["admissions", "occupancy"], "decline_reason": None}
+    agent, stub = make_agent({"numbers": clarify})
+    first = agent.ask("why arent the numbers higher", HV)
+    assert isinstance(first, Clarification) and first.term == "numbers"
+    agent.define(HV, "numbers", "metric:admissions")
+    second = agent.ask("why arent the numbers higher", HV)  # the stub still asks; the saved meaning must win
+    assert not isinstance(second, Clarification)
+    assert isinstance(second, Answer) and second.spec.metric == "admissions"
+    assert any("'numbers' means" in b["text"] for b in [{"text": c} for c in [stub.system_seen[-1]]])

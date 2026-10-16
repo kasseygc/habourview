@@ -30,6 +30,7 @@ class NotesResult:
     model_ran: bool
     model_calls: int
     rejected: list[dict]
+    notes_sent: int = 0  # unique redacted notes sent to the model
 
 
 def _review(field: str, sources: set[str], model_ran: bool) -> str:
@@ -96,4 +97,5 @@ def run_notes(raw: pd.DataFrame, llm: SpecModel | None, directory: tuple[str, ..
         model_ran=model_ran,
         model_calls=model_out.calls if model_out else 0,
         rejected=model_out.rejected if model_out else [],
+        notes_sent=len(items) if model_ran else 0,
     )

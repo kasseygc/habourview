@@ -1,9 +1,10 @@
 """The one place that talks to a language model, with recorded replays for offline, deterministic runs.
 
-Default: a self-hosted open model (Google Gemma 3 12B) served by Ollama on this machine. Nothing
-leaves the computer. In production the same open model runs in Axon's own AWS account in Canada
-(ca-central-1), so no outside company processes the text. A hosted-API client is kept only
-to show the swap point; it is off unless explicitly chosen.
+A self-hosted open model (Google Gemma 3 12B) served by Ollama. There is no client for any outside AI
+service. The model address (OLLAMA_URL) must be this machine or a private network address; anything
+else is refused before a request is made. In production the same open model runs in Axon's own AWS
+account in Canada (ca-central-1), reached over a private address, so no outside company processes
+the text.
 
 Modes (env AXON_LLM_MODE):
   auto    use a recording if one exists, otherwise call the model and save the answer
@@ -20,11 +21,14 @@ Never resident records, query results, names, IDs or dates of birth.
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import os
+import socket
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from urllib.parse import urlparse
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -58,20 +62,35 @@ def resolve_mode() -> str:
     return mode
 
 
-def model_reachable(provider: str = DEFAULT_PROVIDER) -> bool:
-    if provider == "anthropic":
-        return bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
+class EndpointNotPrivate(RuntimeError):
+    pass
+
+
+def check_endpoint(url: str = OLLAMA_URL) -> None:
+    """Refuse any model address that isn't this machine or a private network (RFC 1918, loopback)."""
+    host = urlparse(url).hostname or ""
     try:
+        addresses = {info[4][0] for info in socket.getaddrinfo(host, None)}
+    except socket.gaierror as e:
+        raise EndpointNotPrivate(f"model address {host!r} can't be resolved") from e
+    public = [a for a in addresses if not (ipaddress.ip_address(a).is_private or ipaddress.ip_address(a).is_loopback)]
+    if not addresses or public:
+        raise EndpointNotPrivate(f"model address {host!r} is not on this machine or a private network; refusing to send text there")
+
+
+def model_reachable() -> bool:
+    try:
+        check_endpoint()
         with urllib.request.urlopen(f"{OLLAMA_URL}/api/version", timeout=1.5):
             return True
-    except (urllib.error.URLError, TimeoutError, OSError):
+    except (EndpointNotPrivate, urllib.error.URLError, TimeoutError, OSError):
         return False
 
 
 class SpecModel:
-    def __init__(self, model: str | None = None, mode: str | None = None, provider: str | None = None,
+    def __init__(self, model: str | None = None, mode: str | None = None,
                  cassette_dir: Path = CASSETTE_DIR, timeout_s: float = 600, save_recordings: bool = True):
-        self.provider = provider or os.environ.get("AXON_LLM_PROVIDER", DEFAULT_PROVIDER)
+        self.provider = DEFAULT_PROVIDER  # the only one; part of each recording's key
         self.model = model or os.environ.get("AXON_LLM_MODEL", DEFAULT_MODEL)
         self.mode = mode or resolve_mode()
         self.cassette_dir = cassette_dir
@@ -80,7 +99,7 @@ class SpecModel:
 
     def warm_up(self) -> None:
         """Load the local model into memory so the first question doesn't pay for it."""
-        if self.provider != "ollama" or not model_reachable(self.provider):
+        if not model_reachable():
             return
         body = json.dumps({"model": self.model, "keep_alive": "60m"}).encode()
         req = urllib.request.Request(f"{OLLAMA_URL}/api/generate", data=body, headers={"Content-Type": "application/json"})
@@ -103,13 +122,12 @@ class SpecModel:
             rec = json.loads(path.read_text())
             return LLMCall(rec["response_text"], rec["model"], "replay", rec["stop_reason"],
                            rec.get("input_tokens"), rec.get("output_tokens"), rec.get("request_id"))
-        if self.mode == "replay" or not model_reachable(self.provider):
+        if self.mode == "replay" or not model_reachable():
             raise LLMUnavailable(
                 "No recorded answer for this exact question, and the local model isn't running. "
                 "Start it with `ollama serve` to ask new questions."
             )
-        call = self._call_anthropic(system, user_text, schema) if self.provider == "anthropic" \
-            else self._call_ollama(system, user_text, schema)
+        call = self._call_ollama(system, user_text, schema)
         if self.mode in {"auto", "record"} and self.save_recordings:
             self.cassette_dir.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps({
@@ -122,6 +140,7 @@ class SpecModel:
 
     def _call_ollama(self, system: list[dict], user_text: str, schema: dict) -> LLMCall:
         """Local open model. `format` constrains decoding to the JSON schema; temperature 0 for repeatability."""
+        check_endpoint()  # never send text to an address outside this machine or the private network
         body = {
             "model": self.model,
             "messages": [{"role": "system", "content": "\n\n".join(b["text"] for b in system)},
@@ -143,20 +162,3 @@ class SpecModel:
             stop_reason=data.get("done_reason", "stop"),
             input_tokens=data.get("prompt_eval_count"), output_tokens=data.get("eval_count"),
         )
-
-    def _call_anthropic(self, system: list[dict], user_text: str, schema: dict) -> LLMCall:
-        """Optional hosted alternative (not used by default; would need agreements and Canadian residency)."""
-        import anthropic
-
-        response = anthropic.Anthropic().messages.create(
-            model=self.model, max_tokens=16000, system=system,
-            messages=[{"role": "user", "content": user_text}],
-            output_config={"effort": "medium", "format": {"type": "json_schema", "schema": schema}},
-        )
-        if response.stop_reason == "refusal":
-            text = json.dumps({"action": "decline", "spec": None, "unclear_terms": [], "candidate_metrics": [],
-                               "decline_reason": "unsafe"})
-        else:
-            text = next(b.text for b in response.content if b.type == "text")
-        return LLMCall(text, response.model, "model", response.stop_reason,
-                       response.usage.input_tokens, response.usage.output_tokens)

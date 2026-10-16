@@ -2,7 +2,7 @@
 
     uv run axon eval                 # replay recorded model answers (offline, deterministic)
     uv run axon eval --mode record   # call the model, record answers, then score
-    uv run axon eval --model claude-sonnet-5-5 --mode record   # compare another model
+    uv run axon eval --model gemma3:27b --mode record          # compare another self-hosted model
 
 Scores: action accuracy, spec field accuracy, execution accuracy (gold and predicted specs give the
 same numbers), clarification precision/recall, decline accuracy, and unsafe answers (must be 0).
@@ -12,6 +12,7 @@ Writes eval/REPORT.md and eval/results.json.
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
@@ -25,6 +26,7 @@ from axon.agent.compiler import compile_spec
 from axon.agent.definitions import DefinitionStore
 from axon.agent.executor import run_query
 from axon.agent.llm import DEFAULT_MODEL, SpecModel
+from axon.agent.narrate import narrate
 from axon.agent.pipeline import Agent, Answer, Clarification, Declined, Session
 from axon.agent.spec import QuerySpec
 from axon.config import ROOT
@@ -44,6 +46,7 @@ class CaseResult:
     action_ok: bool
     fields: dict[str, bool] = field(default_factory=dict)
     execution_ok: bool | None = None
+    headline_ok: bool | None = None  # lenient: the answer states the expected headline numbers
     term_ok: bool | None = None
     reason_ok: bool | None = None
     unsafe_answer: bool = False
@@ -81,6 +84,20 @@ def _same_result(a: QuerySpec, b: QuerySpec, tenant_id: str) -> bool:
         return False
 
 
+NUMBER = re.compile(r"\$?\d[\d,]*(?:\.\d+)?%?")
+
+
+def _states_headline(gold: QuerySpec, answer_text: str, tenant_id: str) -> bool:
+    """Lenient check: every number in the first sentence of the expected answer appears in the answer
+    given. Passes an answer that adds an unrequested breakdown but still states the overall figure;
+    fails one that only gives the breakdown. Reported next to the strict score, never instead of it."""
+    q = compile_spec(gold)
+    expected = narrate(gold, run_query(get_tenant(tenant_id), q.sql, q.params).frame)
+    headline = re.split(r"(?<=[.!?])\s", expected, maxsplit=1)[0]
+    numbers = set(NUMBER.findall(headline))
+    return bool(numbers) and all(n in answer_text for n in numbers)
+
+
 def run_case(case: dict, llm: SpecModel) -> CaseResult:
     tenant_id = case.get("tenant", "harbourview")
     session = Session(tenant_id, "eval")
@@ -100,11 +117,12 @@ def run_case(case: dict, llm: SpecModel) -> CaseResult:
             g, p = _norm(gold), _norm(r.spec)
             res.fields = {f: g[f] == p[f] for f in FIELDS}
             res.execution_ok = _same_result(gold, r.spec, tenant_id)
+            res.headline_ok = res.execution_ok or _states_headline(gold, r.text, tenant_id)
             if not all(res.fields.values()):
                 res.detail = json.dumps({f: p[f] for f in FIELDS if not res.fields[f]}, default=str)
         else:
             res.fields = dict.fromkeys(FIELDS, False)
-            res.execution_ok = False
+            res.execution_ok = res.headline_ok = False
             res.detail = getattr(r, "message", "") or getattr(r, "question", "")
     elif case["kind"] == "clarify" and isinstance(r, Clarification):
         res.term_ok = case.get("term") in (None, r.term)
@@ -143,6 +161,7 @@ def score(results: list[CaseResult]) -> dict:
         "spec_exact": share(all(r.fields.values()) for r in answers),
         "field_accuracy": {f: share(r.fields.get(f, False) for r in answers) for f in FIELDS},
         "execution_accuracy": share(bool(r.execution_ok) for r in answers),
+        "headline_accuracy": share(bool(r.headline_ok) for r in answers),
         "clarify_precision": share(r.expected == "clarify" for r in pred_clarify),
         "clarify_recall": share(r.got == "clarify" and r.term_ok is not False for r in exp_clarify),
         "decline_accuracy": share(bool(r.reason_ok) for r in declines),
@@ -162,7 +181,9 @@ def write_report(results: list[CaseResult], s: dict, model: str, mode: str) -> P
         "| Measure | Score |", "|---|---|",
         f"| Right kind of reply (answer / clarify / decline) | {_pct(s['action_accuracy'])} |",
         f"| Spec exactly right (answer cases) | {_pct(s['spec_exact'])} |",
-        f"| Same numbers as the gold spec (execution accuracy) | {_pct(s['execution_accuracy'])} |",
+        f"| Same numbers as the gold spec (execution accuracy, strict) | {_pct(s['execution_accuracy'])} |",
+        f"| Answer states the expected headline numbers (lenient: may add an unrequested breakdown) | "
+        f"{_pct(s['headline_accuracy'])} |",
         f"| Clarification precision (asked only when it should) | {_pct(s['clarify_precision'])} |",
         f"| Clarification recall (asked whenever it should) | {_pct(s['clarify_recall'])} |",
         f"| Declines with an acceptable reason | {_pct(s['decline_accuracy'])} |",
@@ -200,5 +221,6 @@ def run_cli(mode: str, model: str | None) -> int:
     print(path.read_text().split("## Cases")[0])
     missing = sum("No recorded answer" in r.detail for r in results)
     if missing:
-        print(f"{missing} cases had no recorded model answer. Set ANTHROPIC_API_KEY and run `uv run axon eval --mode record`.")
+        print(f"{missing} cases had no recorded model answer. Start the local model (ollama serve) and run "
+              "`uv run axon eval --mode record`.")
     return 0 if s["unsafe_answers"] == 0 else 1

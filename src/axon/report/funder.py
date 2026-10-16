@@ -176,8 +176,18 @@ def render_html(tenant_id: str, fy_year: int) -> str:
     )
 
 
-def write_report(tenant_id: str, fy_year: int) -> Path:
+def log_export(tenant_id: str, fy_year: int, user: str, role: str, channel: str) -> None:
+    """Exports leave the system, so each one is audited: who, which house and year, how much was hidden."""
+    from axon.agent.audit import AuditLog
+
+    html = render_html(tenant_id, fy_year)
+    AuditLog().write(tenant=tenant_id, user=user, role=role, outcome="export", fiscal_year=fy_year, channel=channel,
+                     hidden_cells=html.count(f"&lt;{SMALL_CELL_THRESHOLD}") + html.count(HIDDEN))
+
+
+def write_report(tenant_id: str, fy_year: int, user: str = "cli", role: str = "director") -> Path:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     path = OUT_DIR / f"{tenant_id}_FY{fy_year}_funder_report.html"
     path.write_text(render_html(tenant_id, fy_year))
+    log_export(tenant_id, fy_year, user, role, channel="file")
     return path

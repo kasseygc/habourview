@@ -15,12 +15,27 @@ from axon.agent.llm import SpecModel
 from axon.ingest import read_residents
 from axon.model import build_model
 from axon.notes import exits
+from axon.agent.audit import AuditLog
 from axon.notes.extract import run_notes
 from axon.quality import check
 from axon.tenants import TENANTS, Tenant
 
-# The only tables the agent may query. dq_issues, note_findings (redacted quotes) and meta are director-only.
-AGENT_TABLES = ("residents", "followups", "nightly_census")
+# The only tables the agent may query. dq_issues, note_findings and meta are director-only.
+# note_mentions holds what notes say as topics and short redacted phrases; queries can only count people.
+AGENT_TABLES = ("residents", "followups", "nightly_census", "note_mentions")
+
+
+def note_mentions(findings: pd.DataFrame, residents: pd.DataFrame) -> pd.DataFrame:
+    """One row per person and topic a note mentions, with the redacted phrase it came from."""
+    m = findings.merge(residents[["resident_id", "current_status"]], on="resident_id", how="left")
+    return pd.DataFrame({
+        "resident_id": m["resident_id"],
+        "current_status": m["current_status"],
+        "note_field": m["field"],
+        "topic": m["value"],
+        "phrase": m["quote"],
+        "unconfirmed": m["review"].isin(["needs_review", "rules_only"]),
+    })
 
 
 @dataclass
@@ -46,7 +61,12 @@ def build_tenant(tenant: Tenant, as_of: date = AS_OF, llm: SpecModel | None = No
     model = build_model(raw, as_of)
     issues = check(raw, model, as_of)
     # Staff notes are read in their own step; only structured fields join the analytics tables.
-    notes = run_notes(raw, llm if llm is not None else SpecModel(), directory=tenant.directory())
+    reader = llm if llm is not None else SpecModel()
+    notes = run_notes(raw, reader, directory=tenant.directory())
+    # Counts only: never note text.
+    AuditLog().write(tenant=tenant.id, user="build", role="system", outcome="notes_extraction",
+                     model=getattr(reader, "model", None), model_ran=notes.model_ran, notes_sent=notes.notes_sent,
+                     model_calls=notes.model_calls, quotes_rejected=len(notes.rejected))
     residents = model.residents.merge(notes.per_resident, on="resident_id", how="left")
     residents = residents.merge(exits.derive(residents, notes.findings), on="resident_id", how="left")
     meta = {
@@ -71,6 +91,7 @@ def build_tenant(tenant: Tenant, as_of: date = AS_OF, llm: SpecModel | None = No
         for name, frame in [
             ("residents", residents),
             ("note_findings", notes.findings),
+            ("note_mentions", note_mentions(notes.findings, residents)),
             ("followups", model.followups),
             ("nightly_census", model.nightly_census),
             ("dq_issues", issues),

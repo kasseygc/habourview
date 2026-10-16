@@ -10,7 +10,7 @@ read-only queries. Both follow the same rule: the model fills a fixed schema; co
 flowchart LR
     N[Staff note] --> R[Redact: names, phones, IDs]
     R --> RU[Rules: familiar wording]
-    R --> M[Claude: fixed schema,<br/>quote for every finding]
+    R --> M[Self-hosted model: fixed schema,<br/>quote for every finding]
     M --> V[Validator: quote is in the note,<br/>field fits where the person is]
     RU --> MG[Merge]
     V --> MG
@@ -67,8 +67,11 @@ flowchart LR
 }
 ```
 
-The catalogue (`src/axon/agent/registry.py`) defines 8 metrics, 8 groupings, 5 filter fields
-and 4 chart types, and for each metric which groupings, filters and charts it allows. The model
+The catalogue (`src/axon/agent/registry.py`) defines 12 metrics, 14 groupings, 13 filter fields
+and 4 chart types, and for each metric which groupings, filters and charts it allows. Two are only
+in the question tool, not on the dashboard: entrance fee amounts (average, median, total), and what
+staff notes say about a topic, answered as a count of people plus the notes' own redacted phrases,
+never who. The model
 must also return one of three actions: `answer` (with a spec), `clarify` (with the unclear
 words and candidate metrics) or `decline` (with a reason from a fixed list).
 
@@ -106,7 +109,8 @@ declined by rule before the model sees them.
 ## Clarification
 
 A small glossary (`glossary.py`) lists words that sound like metrics but have no single meaning:
-sober, relapse, successful, active, dropout, this year. If one appears and the house hasn't
+sober, relapse, successful, active, dropout, this year, average fee (among people charged, or
+everyone with waived fees as $0). If one appears and the house hasn't
 defined it, the agent asks before calling the model. The choices are concrete catalogue options,
 for example for "sober":
 
@@ -131,10 +135,10 @@ graduates doing?"; then the choices are the catalogue metrics it suggested, neve
 
 ## Evaluation
 
-`eval/questions.yaml` holds 45 labelled questions: 27 answerable (counts, occupancy including a
-single night, outcomes, breakdowns, how stays ended, referrals by what the notes say), 3 with saved
-definitions, 7 that must trigger clarification, and 8 that must be declined (individuals, writes,
-another house, prompt injection, out of scope).
+`eval/questions.yaml` holds 48 labelled questions: 30 answerable (counts, fees, occupancy including
+a single night, outcomes, breakdowns, how stays ended, what notes say), 4 with saved definitions, 8
+that must trigger clarification, and 6 that must be declined (individuals, writes, another house,
+prompt injection, predictions).
 
 `uv run axon eval` scores:
 
@@ -156,7 +160,9 @@ questions (redacted), with the declines and clarifications reviewed by a person 
 
 - **What the model sees:** for questions, the catalogue, the house's saved definitions and the
   redacted question, never records or results. For notes, one redacted note at a time with no
-  identifiers attached. Notes themselves never enter the analytics tables; only structured values do.
+  identifiers attached. Whole notes never enter the analytics tables; only structured values and the
+  short redacted phrases they were read from, which the question tool can count but never tie to a
+  person.
 - **Redaction:** notes and questions are redacted before anything reads them, in four layers:
   structured identifiers (phones, emails, health card numbers, SINs, dates, resident IDs); names
   next to a relationship or role word ("brother Kevin", "PO Martel", "Linda (sister)"); the

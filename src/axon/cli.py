@@ -1,4 +1,4 @@
-"""Command line: `uv run axon build | report | eval | notes-eval | redaction-eval`."""
+"""Command line: `uv run axon build | report | eval | notes-eval | redaction-eval | audit-verify`."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ def main(argv: list[str] | None = None) -> int:
     nev = sub.add_parser("notes-eval", help="Score staff-note extraction against eval/notes_gold.yaml")
     nev.add_argument("--mode", choices=["auto", "replay", "record", "live"], default="replay")
     nev.add_argument("--model", default=None)
+    sub.add_parser("audit-verify", help="Check the audit log's hash chain for edited, removed or reordered lines")
     rev = sub.add_parser("redaction-eval", help="Score name redaction against eval/redaction_gold.yaml")
     rev.add_argument("--models", nargs="+", default=["en_core_web_sm", "en_core_web_lg"], help="name-detector models to compare")
     args = parser.parse_args(argv)
@@ -39,6 +40,12 @@ def main(argv: list[str] | None = None) -> int:
         from axon.notes.evaluate import run_cli as notes_cli
 
         return notes_cli(mode=args.mode, model=args.model)
+    if args.command == "audit-verify":
+        from axon.agent.audit import AuditLog
+
+        ok, message = AuditLog().verify()
+        print(("OK: " if ok else "BROKEN: ") + message)
+        return 0 if ok else 1
     if args.command == "redaction-eval":
         from axon.redaction_eval import run_cli as redaction_cli
 

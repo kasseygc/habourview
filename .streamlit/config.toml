@@ -45,3 +45,7 @@ gatherUsageStats = false
 [server]
 headless = true
 enableStaticServing = true
+
+[client]
+# No developer menu or Deploy button for the people using the dashboard.
+toolbarMode = "minimal"

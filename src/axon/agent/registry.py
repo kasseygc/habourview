@@ -10,6 +10,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from axon.ingest import DISCHARGE_REASONS, STATUSES
+from axon.notes.schema import FIELDS
+
+NOTE_TOPICS = tuple(dict.fromkeys(v for values in FIELDS.values() for v in values))
 
 
 @dataclass(frozen=True)
@@ -75,6 +78,8 @@ DIMENSIONS: dict[str, Dimension] = {
         Dimension("note_referral", "What the staff note says", "coalesce(note_referral, 'no usable note')"),
         Dimension("exit_type", "How the stay ended", "exit_type"),
         Dimension("destination", "Where they went next, per the staff note", "coalesce(destination, 'not stated')"),
+        Dimension("note_topic", "What the staff note says", "topic"),
+        Dimension("note_field", "Kind of note finding", "note_field"),
     ]
 }
 
@@ -99,6 +104,8 @@ FILTERS: dict[str, FilterField] = {
         FilterField("exit_type", "How the stay ended", "exit_type", values=EXIT_TYPES),
         FilterField("destination", "Where they went next, per the staff note", "coalesce(destination, 'not stated')",
                     values=DESTINATIONS),
+        FilterField("note_topic", "What the staff note says", "topic", values=NOTE_TOPICS),
+        FilterField("note_field", "Kind of note finding", "note_field", values=tuple(FIELDS)),
         FilterField("length_of_stay_days", "Length of stay in days", "los_days", kind="number", ops=("between",)),
         FilterField("days_to_admission", "Days from referral to admission", "days_referral_to_admission", kind="number",
                     ops=("between",)),
@@ -199,6 +206,35 @@ METRICS: dict[str, Metric] = {
             table="residents", select="COUNT(*) AS n", base_where="current_status = 'not_admitted'",
             date_column="referral_date", dimensions=("note_referral_state", "note_referral", *TIME_DIMS),
             filters=("note_referral_state",), charts=("bar", "stacked_bar", "table"),
+        ),
+        Metric(
+            "entrance_fees", "Entrance fees (amounts)",
+            "Entrance fee amounts for everyone with a fee record (set at intake), dated by intake date: average, "
+            "median and total. Waived fees count as $0; filter fee_status to 'paid' for people charged only.",
+            table="residents",
+            select=(
+                "COUNT(*) AS n, AVG(CASE WHEN fee_waived THEN 0 ELSE entrance_fee END) AS avg_fee, "
+                "MEDIAN(CASE WHEN fee_waived THEN 0 ELSE entrance_fee END) AS median_fee, "
+                "SUM(CASE WHEN fee_waived THEN 0 ELSE entrance_fee END) AS total_fee"
+            ),
+            base_where="entrance_fee IS NOT NULL", date_column="intake_date",
+            dimensions=(*TIME_DIMS, "fee_status"), filters=("fee_status",),
+            charts=("bar", "line", "table"), value_column="avg_fee",
+        ),
+        Metric(
+            "notes_mentions", "What staff notes say about a topic (redacted phrases, AI-assisted)",
+            "How many people's staff notes mention a topic (for example cravings, low mood, an incident, meetings, "
+            "a pass, why they left, where they went), with the short redacted phrases the notes use. Read from notes "
+            "by rules and a model and not yet confirmed by staff. Counts and phrases only, never who. Notes as of "
+            "the extract date, so a time window does not apply.",
+            table="note_mentions",
+            select=(
+                "COUNT(DISTINCT resident_id) AS people, "
+                "string_agg(DISTINCT phrase, ' | ' ORDER BY phrase) AS phrases, bool_or(unconfirmed) AS unconfirmed"
+            ),
+            dimensions=("note_topic", "note_field", "current_status"),
+            filters=("note_topic", "note_field", "current_status"),
+            required_dimensions=("note_topic", "note_field"), charts=("table",), value_column="people",
         ),
         Metric(
             "residents_now", "Residents by current status (as of the extract date)",

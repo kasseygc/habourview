@@ -23,6 +23,7 @@ class UnsafeQuery(ValueError):
 ALLOWED_FUNCTIONS = {
     "and", "or", "not", "count", "sum", "avg", "min", "max", "case", "if", "cast", "coalesce", "nullif",
     "round", "abs", "timetostr", "year", "quarter", "month",
+    "median", "groupconcat", "logicalor",  # median(), string_agg(), bool_or()
 }
 # Node types that write, change state or reach outside the database.
 FORBIDDEN = tuple(

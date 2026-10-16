@@ -27,7 +27,7 @@ from axon.metrics.outcomes import outcomes  # noqa: E402
 from axon.metrics.stays import stays  # noqa: E402
 from axon.notes.schema import NOTES_DISCLOSURE, label  # noqa: E402
 from axon.notes.summary import headline, summarize as summarize_notes  # noqa: E402
-from axon.report.funder import render_html  # noqa: E402
+from axon.report.funder import log_export, render_html  # noqa: E402
 from axon.status import board  # noqa: E402
 from axon.tenants import TENANTS, get_tenant  # noqa: E402
 from axon.warehouse import build_all, load  # noqa: E402
@@ -94,6 +94,7 @@ with head:
 with export_col:
     st.download_button("Export", render_html(session.tenant_id, fy.year), file_name=f"{session.tenant_id}_{fy.label}_report.html",
                        mime="text/html", help="Funder report: counts from 1 to 4 hidden. Print to PDF from the browser.",
+                       on_click=log_export, args=(session.tenant_id, fy.year, session.user_id, session.role, "download"),
                        width="stretch", icon=":material/download:")
 
 flags = {f.key: f for f in board(w)}

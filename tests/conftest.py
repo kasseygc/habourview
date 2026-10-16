@@ -5,6 +5,7 @@ import os
 
 # Tests never call the API: model answers come only from recordings in eval/cassettes.
 os.environ["AXON_LLM_MODE"] = "replay"
+os.environ["AXON_AUDIT_PATH"] = os.path.join(__import__("tempfile").mkdtemp(), "audit.jsonl")  # never the real log
 from datetime import date
 
 import pandas as pd
@@ -60,9 +61,11 @@ class StubLLM:
     def __init__(self, replies: dict[str, dict | str]):
         self.replies = replies
         self.calls: list[str] = []
+        self.system_seen: list[str] = []
 
     def complete(self, system, user_text, schema):
         self.calls.append(user_text)
+        self.system_seen.append("\n".join(block["text"] for block in system))
         for needle, reply in self.replies.items():
             if needle.lower() in user_text.lower():
                 text = reply if isinstance(reply, str) else json.dumps(reply)

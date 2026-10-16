@@ -136,3 +136,14 @@ def test_notes_about_people_who_left_follow_the_fiscal_year(hv):
     assert fy25["In the house now"].people == all_years["In the house now"].people  # where people are now
     assert not fy25["In the house now"].by_year and fy25["Referred, not admitted"].by_year
     assert fy25["Referred, not admitted"].people == 64 < all_years["Referred, not admitted"].people
+
+
+def test_note_mentions_hold_only_redacted_phrases_from_the_notes(hv):
+    import duckdb
+    from axon.tenants import get_tenant
+    con = duckdb.connect(str(get_tenant("harbourview").warehouse_path), read_only=True)
+    m = con.execute("SELECT * FROM note_mentions").df()
+    con.close()
+    assert set(m.columns) == {"resident_id", "current_status", "note_field", "topic", "phrase", "unconfirmed"}
+    for name in ("Kevin", "Martel", "Priya", "Linda", "905", "613"):
+        assert not m["phrase"].str.contains(name).any()

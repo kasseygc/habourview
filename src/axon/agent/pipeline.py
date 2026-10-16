@@ -156,6 +156,10 @@ class Agent:
         # 2. Known fuzzy words must be defined for this house before anything runs.
         definitions = self.store.current(tenant.id)
         terms = glossary.find_terms(red.text)
+        # Words this house defined by picking a measure ("numbers" -> admissions) count as defined too,
+        # so the model is told and the meaning is applied. Without this, it would ask again forever.
+        terms += [t for t in definitions if t not in terms and t not in GLOSSARY
+                  and re.search(rf"\b{re.escape(t)}\b", red.text, re.IGNORECASE)]
         for term in terms:
             if term not in definitions:
                 t = GLOSSARY[term]
@@ -193,7 +197,18 @@ class Agent:
             message = DECLINE_MESSAGES[reason] + (" " + supported_questions() if reason == "out_of_scope" else "")
             return done(Declined(reason, message), decided_by="model")
 
-        if reply.action == "clarify":
+        spec = reply.spec
+        if reply.action == "clarify" and reply.unclear_terms[0] in definitions:
+            # Already answered for this house: use the saved meaning, never ask the same question twice.
+            term = reply.unclear_terms[0]
+            spec = spec_from_definition(term, definitions[term])
+            if spec is None:
+                return done(Failed(f"This house defined '{term}' as {definitions[term].label.lower()}, but this question "
+                                   "needs more than that. Try asking for it directly. " + supported_questions()),
+                            term=term, error="definition_incomplete")
+            if term not in terms:
+                terms.append(term)
+        elif reply.action == "clarify":
             term = reply.unclear_terms[0]
             if term in GLOSSARY:
                 t = GLOSSARY[term]
@@ -209,7 +224,6 @@ class Agent:
             )
 
         # 4. Apply this house's definitions for the words used, deterministically.
-        spec = reply.spec
         used: list[Definition] = []
         try:
             for term in terms:
@@ -251,6 +265,20 @@ class Agent:
                          term=term, choice_id=choice_id)
 
 
+def spec_from_definition(term: str, definition: Definition) -> QuerySpec | None:
+    """A query built from a saved definition alone, or None if the definition doesn't name enough."""
+    patch = choice_for(term, definition.choice_id).patch
+    if "metric" not in patch:
+        return None
+    m = METRICS[patch["metric"]]
+    try:
+        base = QuerySpec.model_construct(metric=m.id, group_by=[], filters=[], chart=m.charts[0],
+                                         time_window=QuerySpec.model_fields["time_window"].default_factory())
+        return apply_patch(base, patch)
+    except (ValueError, KeyError):
+        return None
+
+
 def complete_periods(spec: QuerySpec, frame: pd.DataFrame) -> pd.DataFrame:
     """Months with no events still appear, as zeros, when the period is bounded."""
     bounds = spec.time_window.bounds()
@@ -275,6 +303,11 @@ def metric_caveats(spec: QuerySpec) -> list[str]:
         notes.append("Counted each night: a resident fills a bed from admission up to, not including, discharge.")
     if spec.metric == "residents_now":
         notes.append(f"Current status on {AS_OF:%d %b %Y}, the extract date.")
+    if spec.metric == "notes_mentions":
+        notes.append("Read from staff notes by rules and a self-hosted model. Phrases are redacted and never say "
+                     "who they are about. For staff inside the house only.")
+    if spec.metric == "entrance_fees":
+        notes.append("Fees are set at intake. Where the waived flag and the amount disagree, the waived flag decides.")
     if spec.metric == "referrals_by_note":
         notes.append("Read from staff notes by rules and a model. Not yet confirmed by staff; recorded fields are unchanged.")
     return notes

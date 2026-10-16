@@ -105,6 +105,18 @@ GLOSSARY: dict[str, Term] = {
             ),
         ),
         Term(
+            "average_fee",
+            _p(r"(?:average|mean|typical)\b[^.?]{0,25}\bfees?|fees?\b[^.?]{0,15}\bon average"),
+            "Which average entrance fee do you mean?",
+            "Some people have their fee waived. Counting them as $0 lowers the average a lot.",
+            (
+                Choice("charged", "Among people charged (waived fees left out)",
+                       {"metric": "entrance_fees", "filters": [{"field": "fee_status", "values": ["paid"]}]}),
+                Choice("everyone", "Everyone with a fee record, waived fees counted as $0",
+                       {"metric": "entrance_fees"}),
+            ),
+        ),
+        Term(
             "dropout",
             _p(r"drop(?:ped)?[- ]?outs?|dropped|quit|walked out"),
             "Which departures count as dropping out?",

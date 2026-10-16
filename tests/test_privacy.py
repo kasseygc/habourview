@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 
 import duckdb
@@ -125,3 +126,37 @@ def test_name_redaction_holds_on_the_labelled_set():
 
     full = next(s for s in run(["en_core_web_lg"]) if s.name == "Rules + directory + detector (en_core_web_lg)")
     assert full.recall >= 0.95 and not full.keep_lost and not full.false_sentences
+
+
+def test_audit_log_detects_an_edited_or_removed_line(tmp_path):
+    from axon.agent.audit import AuditLog
+
+    log = AuditLog(tmp_path / "audit.jsonl")
+    for i in range(3):
+        log.write(tenant="harbourview", user="director", outcome="answer", question_redacted=f"q{i}")
+    assert log.verify()[0]
+    lines = log.path.read_text().splitlines()
+    log.path.write_text("\n".join([lines[0], lines[2]]) + "\n")  # a line removed
+    assert not log.verify()[0]
+    log.path.write_text("\n".join([lines[0], lines[1].replace("q1", "q9"), lines[2]]) + "\n")  # a line edited
+    assert not log.verify()[0]
+
+
+def test_exports_and_notes_runs_are_audited_without_content(tmp_path, monkeypatch):
+    from axon.agent.audit import AuditLog
+    from axon.report.funder import log_export
+
+    monkeypatch.setenv("AXON_AUDIT_PATH", str(tmp_path / "audit.jsonl"))
+    log_export("harbourview", 2025, "director@harbourview", "director", "download")
+    record = AuditLog().tail(1)[0]
+    assert record["outcome"] == "export" and record["fiscal_year"] == 2025 and record["hidden_cells"] > 0
+    assert "<" not in json.dumps(record)  # no report content
+
+
+def test_the_only_model_address_allowed_is_local_or_private():
+    from axon.agent.llm import EndpointNotPrivate, check_endpoint
+
+    check_endpoint("http://localhost:11434")
+    check_endpoint("http://10.0.3.7:11434")
+    with pytest.raises(EndpointNotPrivate):
+        check_endpoint("http://8.8.8.8:11434")

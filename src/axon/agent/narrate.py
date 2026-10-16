@@ -52,6 +52,10 @@ def narrate(spec: QuerySpec, df: pd.DataFrame) -> str:
         return text
     if spec.metric == "residents_now":
         return _residents_now(spec, df)
+    if spec.metric == "entrance_fees":
+        return _fees(spec, df)
+    if spec.metric == "notes_mentions":
+        return _notes(spec, df)
     return _counts(spec, df, m.label.lower())
 
 
@@ -66,6 +70,45 @@ def _counts(spec: QuerySpec, df: pd.DataFrame, label: str) -> str:
         col = spec.group_by[0]
         by = df.groupby(col)["n"].sum().sort_values(ascending=False)
         text += " " + "; ".join(f"{k.replace('_', ' ')}: {v} ({v / total:.0%})" for k, v in by.items()) + "."
+    return text
+
+
+def _money(x: float) -> str:
+    return f"${x:,.0f}"
+
+
+def _fees(spec: QuerySpec, df: pd.DataFrame) -> str:
+    status = next((f for f in spec.filters if f.field == "fee_status"), None)
+    who = {"paid": "people charged", "waived": "people whose fee was waived"}.get(
+        str(status.values[0]) if status else "", "people with a fee record (waived fees counted as $0)")
+    n, total = int(df["n"].sum()), float(df["total_fee"].sum())
+    text = f"Average entrance fee {_money(total / n)} for {n} {who}, {window_phrase(spec)}; total {_money(total)}."
+    if not spec.group_by:
+        return text + f" Median {_money(df['median_fee'].iloc[0])}."
+    col = spec.group_by[0]
+    groups = [(("no intake date" if pd.isna(k) else k), a, c) for k, a, c in zip(df[col], df["avg_fee"], df["n"]) if c]
+    return text + " " + "; ".join(f"{k}: {_money(a)} (n {int(c)})" for k, a, c in groups) + "."
+
+
+def _notes(spec: QuerySpec, df: pd.DataFrame) -> str:
+    """What notes say, as counts and the notes' own redacted phrases. Never who."""
+    topics = next((f for f in spec.filters if f.field == "note_topic"), None)
+    about = " or ".join(label(str(v)) for v in topics.values) if topics and topics.op == "in" else "these topics"
+    by = next((g for g in spec.group_by if g in ("note_topic", "note_field")), None)
+    if by:
+        parts = df.groupby(by)["people"].sum().sort_values(ascending=False)
+        text = "Staff notes mention: " + "; ".join(f"{label(str(k))} {int(v)}" for k, v in parts.items()) + " (people)."
+    else:
+        text = f"Staff notes mention {about} for {int(df['people'].sum())} people"
+        if "current_status" in spec.group_by:
+            text += " (" + ", ".join(f"{STATUS_LABELS.get(s, s)} {int(n)}" for s, n in zip(df["current_status"], df["people"])) + ")"
+        text += "."
+    phrases = sorted({p for cell in df["phrases"].dropna() for p in str(cell).split(" | ") if p})
+    if phrases:
+        shown = "; ".join(f"“{p}”" for p in phrases[:6])
+        text += f" In the notes' words, redacted: {shown}" + (f" and {len(phrases) - 6} more." if len(phrases) > 6 else ".")
+    if df["unconfirmed"].any():
+        text += " Not yet confirmed by staff."
     return text
 
 
@@ -151,7 +194,7 @@ def _outcomes(spec: QuerySpec, df: pd.DataFrame) -> str:
 
 
 def small_cell_note(df: pd.DataFrame, spec: QuerySpec) -> str | None:
-    count_cols = [c for c in ("n", "due") if c in df.columns]
+    count_cols = [c for c in ("n", "due", "people") if c in df.columns]
     if any(is_small(int(v)) for c in count_cols for v in df[c]):
         return "Some groups have fewer than 5 people. Read those with care, and don't share them outside the house."
     return None
