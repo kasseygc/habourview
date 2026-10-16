@@ -46,27 +46,39 @@ FIELDS: dict[str, dict[str, str]] = {
         "aftercare_attending": "attending aftercare or check-ins",
         "aftercare_missed": "missing aftercare sessions",
         "alumni_involved": "alumni events or volunteering",
-        "sober_living": "moved to sober living",
         "doing_well": "described as doing well or in good spirits",
         "no_recent_contact": "no contact for a while",
+    },
+    "passes": {
+        "pass_taken": "a day, overnight or weekend pass was approved or taken",
+        "pass_returned": "came back from a pass as expected",
+        "pass_late_or_missed": "came back late from a pass, or did not come back",
+    },
+    "destination": {
+        "sober_living": "moved to sober living or supportive housing",
+        "home_or_family": "went home or to live with family",
+        "another_program": "went to another program or region",
+        "detox": "went to detox or a higher level of care",
+        "hospital": "went to hospital",
+        "custody": "went into custody (arrested, incarcerated)",
     },
 }
 
 APPLIES_TO: dict[str, tuple[str, ...]] = {
     "not_admitted": ("referral",),
-    "phase_1": ("risk", "engagement"),
-    "phase_2": ("risk", "engagement"),
-    "phase_3": ("risk", "engagement"),
-    "aftercare": ("risk", "engagement"),
-    "alumni": ("engagement",),
-    "discharged": ("discharge",),
+    "phase_1": ("risk", "engagement", "passes"),
+    "phase_2": ("risk", "engagement", "passes"),
+    "phase_3": ("risk", "engagement", "passes"),
+    "aftercare": ("risk", "engagement", "destination"),
+    "alumni": ("engagement", "destination"),
+    "discharged": ("discharge", "destination"),
 }
 
 OPEN_REFERRAL = {"pending_intake", "waitlisted"}
 # Review policy: risk always goes to a person; referral and discharge change reported numbers,
 # so they are agreed only when rules and model match; engagement from the model is accepted.
 ALWAYS_REVIEW = {"risk"}
-NEEDS_AGREEMENT = {"referral", "discharge"}
+NEEDS_AGREEMENT = {"referral", "discharge", "destination"}
 
 
 @dataclass(frozen=True)
@@ -95,7 +107,12 @@ LABELS: dict[str, str] = {
     "aftercare_planned": "aftercare planned", "aftercare_attending": "attending aftercare",
     "aftercare_missed": "missing aftercare", "alumni_involved": "alumni involvement", "sober_living": "sober living",
     "doing_well": "doing well", "no_recent_contact": "no recent contact", "no usable note": "no usable note",
-    "open": "open", "closed": "closed",
+    "open": "open", "closed": "closed", "pass_taken": "pass taken", "pass_returned": "back from pass",
+    "pass_late_or_missed": "late or missed return", "home_or_family": "home or family",
+    "another_program": "another program", "detox": "detox", "hospital": "hospital", "custody": "custody",
+    "not stated": "not stated", "completed": "completed", "left_by_choice": "left by choice",
+    "discharged_by_house": "discharged by the house", "transferred": "transferred",
+    "other_or_unknown": "other or unknown", "still_in_program": "still in the program",
 }
 
 

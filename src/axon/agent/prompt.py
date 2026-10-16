@@ -34,6 +34,9 @@ Choose an action:
 Spec rules:
 - Use only ids that appear in the catalogue, and only the groupings, filters and charts listed
   for the chosen metric. Include every required filter and grouping.
+- Filters: "in" keeps the listed values, "not_in" excludes them, "between" keeps a numeric range
+  (inclusive). Use only the operators listed for each field. Add a filter only when the question
+  asks for that restriction; never add one by default.
 - Dates: the data runs to {AS_OF:%Y-%m-%d}. Fiscal years run January to December.
   "last year" or "2025" means preset "fy2025"; "2024" means "fy2024" (July to December only).
   Use preset "custom" with start and end dates for any other range. Use "all" when no period is given.
@@ -58,8 +61,10 @@ def _catalogue() -> str:
         lines.append(f"    time window: {'by ' + m.date_column if m.date_column else 'not applicable (use all)'}")
     lines += ["", "Groupings:"]
     lines += [f"- {d.id}: {d.label}" for d in DIMENSIONS.values()]
-    lines += ["", "Filters (field: allowed values):"]
-    lines += [f"- {f.id}: {', '.join(f.values)}" for f in FILTERS.values()]
+    lines += ["", "Filters (field: operators; allowed values):"]
+    for f in FILTERS.values():
+        allowed = "two numbers [low, high]" if f.kind == "number" else ", ".join(f.values)
+        lines.append(f"- {f.id}: {' / '.join(f.ops)}; {allowed}" + (" (exactly one value)" if f.single else ""))
     return "\n".join(lines)
 
 
@@ -69,7 +74,10 @@ Q: How many admissions did we have each month in 2025?
 A: {"action":"answer","spec":{"metric":"admissions","group_by":["month"],"filters":[],"time_window":{"preset":"fy2025","start":null,"end":null},"chart":"bar"},"unclear_terms":[],"candidate_metrics":[],"decline_reason":null}
 
 Q: What share of people were engaged in recovery at 12 months, completers vs early leavers?
-A: {"action":"answer","spec":{"metric":"followup_engaged_rate","group_by":["completion_group"],"filters":[{"field":"horizon","values":["12m"]}],"time_window":{"preset":"all","start":null,"end":null},"chart":"bar"},"unclear_terms":[],"candidate_metrics":[],"decline_reason":null}
+A: {"action":"answer","spec":{"metric":"followup_engaged_rate","group_by":["completion_group"],"filters":[{"field":"horizon","op":"in","values":["12m"]}],"time_window":{"preset":"all","start":null,"end":null},"chart":"bar"},"unclear_terms":[],"candidate_metrics":[],"decline_reason":null}
+
+Q: Discharges in 2025 that weren't completions, for stays over 30 days
+A: {"action":"answer","spec":{"metric":"discharges","group_by":["discharge_reason"],"filters":[{"field":"discharge_reason","op":"not_in","values":["completed"]},{"field":"length_of_stay_days","op":"between","values":[31,1000]}],"time_window":{"preset":"fy2025","start":null,"end":null},"chart":"bar"},"unclear_terms":[],"candidate_metrics":[],"decline_reason":null}
 
 Q: How are our graduates doing?
 A: {"action":"clarify","spec":null,"unclear_terms":["doing"],"candidate_metrics":["followup_engaged_rate","followup_outcomes"],"decline_reason":null}

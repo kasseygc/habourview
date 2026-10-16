@@ -1,12 +1,12 @@
 {
   "model": "claude-opus-5-5",
   "mode": "replay",
-  "cases": 65,
+  "cases": 70,
   "systems": {
     "rules": {
       "file": {
         "overall": {
-          "tp": 45,
+          "tp": 50,
           "fp": 0,
           "fn": 0,
           "precision": 1.0,
@@ -38,7 +38,23 @@
           "f1": 1.0
         },
         "engagement": {
-          "tp": 17,
+          "tp": 16,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "passes": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "destination": {
+          "tp": 6,
           "fp": 0,
           "fn": 0,
           "precision": 1.0,
@@ -48,12 +64,12 @@
       },
       "varied": {
         "overall": {
-          "tp": 3,
-          "fp": 0,
-          "fn": 16,
-          "precision": 1.0,
-          "recall": 0.15789473684210525,
-          "f1": 0.2727272727272727
+          "tp": 8,
+          "fp": 1,
+          "fn": 21,
+          "precision": 0.8888888888888888,
+          "recall": 0.27586206896551724,
+          "f1": 0.42105263157894735
         },
         "referral": {
           "tp": 1,
@@ -80,22 +96,38 @@
           "f1": 0.0
         },
         "engagement": {
-          "tp": 2,
+          "tp": 3,
           "fp": 0,
-          "fn": 5,
+          "fn": 7,
           "precision": 1.0,
-          "recall": 0.2857142857142857,
-          "f1": 0.4444444444444445
+          "recall": 0.3,
+          "f1": 0.4615384615384615
+        },
+        "passes": {
+          "tp": 3,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.75,
+          "recall": 0.75,
+          "f1": 0.75
+        },
+        "destination": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5
         }
       },
       "all": {
         "overall": {
-          "tp": 48,
-          "fp": 0,
-          "fn": 16,
-          "precision": 1.0,
-          "recall": 0.75,
-          "f1": 0.8571428571428571
+          "tp": 58,
+          "fp": 1,
+          "fn": 21,
+          "precision": 0.9830508474576272,
+          "recall": 0.7341772151898734,
+          "f1": 0.8405797101449277
         },
         "referral": {
           "tp": 13,
@@ -124,10 +156,26 @@
         "engagement": {
           "tp": 19,
           "fp": 0,
-          "fn": 5,
+          "fn": 7,
           "precision": 1.0,
-          "recall": 0.7916666666666666,
-          "f1": 0.8837209302325582
+          "recall": 0.7307692307692307,
+          "f1": 0.8444444444444443
+        },
+        "passes": {
+          "tp": 3,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.75,
+          "recall": 0.75,
+          "f1": 0.75
+        },
+        "destination": {
+          "tp": 7,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1.0,
+          "recall": 0.7777777777777778,
+          "f1": 0.8750000000000001
         }
       }
     }
@@ -250,6 +298,10 @@
         "note": "Sent to ER, admitted to the medical ward.",
         "missed": [
           [
+            "destination",
+            "hospital"
+          ],
+          [
             "discharge",
             "transfer_hospital"
           ]
@@ -259,6 +311,10 @@
       {
         "note": "Picked up by police on an old warrant.",
         "missed": [
+          [
+            "destination",
+            "custody"
+          ],
           [
             "discharge",
             "incarceration"
@@ -286,6 +342,41 @@
           [
             "engagement",
             "doing_well"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Res. back from weekend pass, appears well, attending NA 3x/wk",
+        "missed": [
+          [
+            "engagement",
+            "doing_well"
+          ]
+        ],
+        "extra": []
+      },
+      {
+        "note": "Didn't come back from overnight pass; staff left a message.",
+        "missed": [
+          [
+            "passes",
+            "pass_late_or_missed"
+          ]
+        ],
+        "extra": [
+          [
+            "passes",
+            "pass_returned"
+          ]
+        ]
+      },
+      {
+        "note": "Graduated, now living with family and working.",
+        "missed": [
+          [
+            "engagement",
+            "work"
           ]
         ],
         "extra": []

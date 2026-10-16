@@ -26,19 +26,34 @@ class SpecError(ValueError):
 
 
 class Filter(BaseModel):
+    """One filter: an allow-listed field, an operator allowed on that field, and its values.
+
+    category fields: op `in` or `not_in`, values from the field's list.
+    number fields:   op `between`, values = [low, high].
+    """
+
     model_config = ConfigDict(extra="forbid")
     field: str
-    values: list[str] = Field(min_length=1)
+    op: Literal["in", "not_in", "between"] = "in"
+    values: list[str | float | int] = Field(min_length=1)
 
     @model_validator(mode="after")
     def _known(self) -> Filter:
         f = FILTERS.get(self.field)
         if f is None:
             raise ValueError(f"unknown filter field {self.field!r}")
+        if self.op not in f.ops:
+            raise ValueError(f"operator {self.op!r} not allowed on {self.field}; allowed: {list(f.ops)}")
+        if f.kind == "number":
+            if len(self.values) != 2 or not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in self.values):
+                raise ValueError(f"{self.field} between needs two numbers")
+            if self.values[0] > self.values[1] or self.values[0] < 0:
+                raise ValueError(f"{self.field} range must be 0 or more, low before high")
+            return self
         bad = [v for v in self.values if v not in f.values]
         if bad:
             raise ValueError(f"values {bad} not allowed for {self.field}; allowed: {list(f.values)}")
-        if self.field in ("fee_status", "horizon") and len(set(self.values)) != 1:
+        if f.single and len(set(self.values)) != 1:
             raise ValueError(f"{self.field} takes exactly one value")
         return self
 
@@ -163,7 +178,7 @@ def apply_patch(spec: QuerySpec, patch: dict) -> QuerySpec:
     m = METRICS[data["metric"]]
     filters = {f["field"]: f for f in data["filters"] if f["field"] in m.filters}
     for f in patch.get("filters", []):
-        filters[f["field"]] = f
+        filters[f["field"]] = {"op": "in", **f}
     data["filters"] = list(filters.values())
     if "group_by" in patch:
         data["group_by"] = list(patch["group_by"])
@@ -185,10 +200,12 @@ def llm_json_schema() -> dict:
         {
             "type": "object",
             "properties": {
-                "field": {"type": "string", "const": f.id},
-                "values": {"type": "array", "items": {"type": "string", "enum": list(f.values)}},
+                "field": {"type": "string", "enum": [f.id]},
+                "op": {"type": "string", "enum": list(f.ops)},
+                "values": {"type": "array",
+                           "items": {"type": "number"} if f.kind == "number" else {"type": "string", "enum": list(f.values)}},
             },
-            "required": ["field", "values"],
+            "required": ["field", "op", "values"],
             "additionalProperties": False,
         }
         for f in FILTERS.values()

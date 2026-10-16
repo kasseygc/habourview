@@ -14,7 +14,7 @@ load_dotenv()
 
 from axon.agent.definitions import DefinitionStore  # noqa: E402
 from axon.agent.glossary import GLOSSARY  # noqa: E402
-from axon.agent.llm import has_api_credentials, resolve_mode  # noqa: E402
+from axon.agent.llm import model_reachable, resolve_mode  # noqa: E402
 from axon.agent.pipeline import Agent, Answer, Clarification, Session  # noqa: E402
 from axon.charts import (  # noqa: E402
     agent_chart, census_chart, flow_chart, funnel_chart, km_chart, legend_html, occupancy_chart, outcomes_chart,
@@ -112,7 +112,7 @@ tenant = get_tenant(session.tenant_id)
 w = get_warehouse(session.tenant_id)
 with head:
     mode = resolve_mode()
-    live = has_api_credentials() and mode != "replay"
+    live = model_reachable() and mode != "replay"
     st.markdown(
         f'<p class="hdr-name">{tenant.name}</p><p class="hdr-meta">{session.role.capitalize()} view · data as of '
         f'{w.as_of:%d %b %Y} · synthetic data</p>',

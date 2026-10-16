@@ -22,10 +22,23 @@ class Dimension:
 
 @dataclass(frozen=True)
 class FilterField:
+    """A filterable column and the operators allowed on it.
+
+    category fields take `in` / `not_in` with values from `values`; number fields take `between`
+    with two numbers. `param_map` turns an allowed label into the stored value (e.g. "waived" -> True).
+    """
+
     id: str
     label: str
-    values: tuple[str, ...]
-    sql: str  # a predicate with one placeholder per value: {params}
+    column: str
+    kind: str = "category"  # category | number
+    values: tuple[str, ...] = ()
+    ops: tuple[str, ...] = ("in", "not_in")
+    single: bool = False  # exactly one value
+    param_map: tuple[tuple[str, object], ...] = ()
+
+    def param(self, value):
+        return dict(self.param_map).get(value, value)
 
 
 @dataclass(frozen=True)
@@ -60,21 +73,36 @@ DIMENSIONS: dict[str, Dimension] = {
         Dimension("outcome", "Follow-up outcome", "outcome"),
         Dimension("note_referral_state", "Open or closed, per the staff note", "coalesce(note_referral_state, 'no usable note')"),
         Dimension("note_referral", "What the staff note says", "coalesce(note_referral, 'no usable note')"),
+        Dimension("exit_type", "How the stay ended", "exit_type"),
+        Dimension("destination", "Where they went next, per the staff note", "coalesce(destination, 'not stated')"),
     ]
 }
+
+EXIT_TYPES = ("completed", "left_by_choice", "discharged_by_house", "transferred", "custody", "other_or_unknown",
+              "still_in_program")
+DESTINATIONS = ("sober_living", "home_or_family", "another_program", "detox", "hospital", "custody", "not stated")
 
 FILTERS: dict[str, FilterField] = {
     f.id: f
     for f in [
-        FilterField("fee_status", "Entrance fee", ("waived", "paid"), "fee_waived = {params}"),
-        FilterField("discharge_reason", "Discharge reason", (*DISCHARGE_REASONS, "not_recorded"), "discharge_reason IN ({params})"),
-        FilterField("completion_group", "Completed or left early", ("completed", "early_leaver"), "completion_group IN ({params})"),
-        FilterField("current_status", "Current status", tuple(STATUSES), "current_status IN ({params})"),
-        FilterField("horizon", "Follow-up point", ("6m", "12m"), "horizon_months = {params}"),
-        FilterField("note_referral_state", "Open or closed, per the staff note", ("open", "closed", "no usable note"),
-                    "coalesce(note_referral_state, 'no usable note') IN ({params})"),
+        FilterField("fee_status", "Entrance fee", "fee_waived", values=("waived", "paid"), ops=("in",), single=True,
+                    param_map=(("waived", True), ("paid", False))),
+        FilterField("discharge_reason", "Discharge reason", "discharge_reason", values=(*DISCHARGE_REASONS, "not_recorded")),
+        FilterField("completion_group", "Completed or left early", "completion_group", values=("completed", "early_leaver")),
+        FilterField("current_status", "Current status", "current_status", values=tuple(STATUSES)),
+        FilterField("horizon", "Follow-up point", "horizon_months", values=("6m", "12m"), ops=("in",), single=True,
+                    param_map=(("6m", 6), ("12m", 12))),
+        FilterField("note_referral_state", "Open or closed, per the staff note",
+                    "coalesce(note_referral_state, 'no usable note')", values=("open", "closed", "no usable note")),
+        FilterField("exit_type", "How the stay ended", "exit_type", values=EXIT_TYPES),
+        FilterField("destination", "Where they went next, per the staff note", "coalesce(destination, 'not stated')",
+                    values=DESTINATIONS),
+        FilterField("length_of_stay_days", "Length of stay in days", "los_days", kind="number", ops=("between",)),
+        FilterField("days_to_admission", "Days from referral to admission", "days_referral_to_admission", kind="number",
+                    ops=("between",)),
     ]
 }
+OPERATORS = ("in", "not_in", "between")
 
 TIME_DIMS = ("month", "quarter", "fiscal_year")
 
@@ -105,9 +133,19 @@ METRICS: dict[str, Metric] = {
             "Stays with no recorded discharge date are not counted.",
             table="residents", select="COUNT(*) AS n", base_where="left_house AND discharge_date IS NOT NULL",
             date_column="discharge_date",
-            dimensions=(*TIME_DIMS, "discharge_reason", "completion_group", "fee_status"),
-            filters=("discharge_reason", "completion_group", "fee_status"),
+            dimensions=(*TIME_DIMS, "discharge_reason", "completion_group", "exit_type", "destination", "fee_status"),
+            filters=("discharge_reason", "completion_group", "exit_type", "destination", "fee_status", "length_of_stay_days"),
             charts=("bar", "stacked_bar", "line", "table"),
+        ),
+        Metric(
+            "stay_outcomes", "How stays ended, for people admitted (completion vs discharge)",
+            "Everyone admitted, dated by admission date, by how the stay ended: completed, left by choice, "
+            "discharged by the house, transferred, custody, other or unknown, or still in the program. The recorded "
+            "reason is used first; staff notes fill in reasons recorded as 'other' or left blank (marked as such).",
+            table="residents", select="COUNT(*) AS n", base_where="admitted",
+            date_column="admission_date", dimensions=("exit_type", "destination", *TIME_DIMS),
+            required_dimensions=("exit_type", "destination"), filters=("exit_type", "fee_status", "length_of_stay_days"),
+            charts=("bar", "stacked_bar", "table"),
         ),
         Metric(
             "occupancy", "Bed occupancy",

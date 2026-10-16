@@ -26,15 +26,15 @@ def compile_spec(spec: QuerySpec, row_limit: int = QUERY_ROW_LIMIT) -> CompiledQ
 
     for f in spec.filters:
         field = FILTERS[f.field]
-        if f.field == "fee_status":
-            where.append(field.sql.format(params="?"))
-            params.append(f.values[0] == "waived")
-        elif f.field == "horizon":
-            where.append(field.sql.format(params="?"))
-            params.append(int(f.values[0].rstrip("m")))
+        col = field.column  # from the registry, never from the spec
+        if f.op == "between":
+            where.append(f"{col} BETWEEN ? AND ?")
+            params.extend([float(f.values[0]), float(f.values[1])])
         else:
-            where.append(field.sql.format(params=", ".join("?" for _ in f.values)))
-            params.extend(f.values)
+            values = [field.param(v) for v in dict.fromkeys(f.values)]
+            marks = ", ".join("?" for _ in values)
+            where.append(f"{col} {'NOT IN' if f.op == 'not_in' else 'IN'} ({marks})")
+            params.extend(values)
 
     bounds = spec.time_window.bounds()
     if bounds and m.date_column:

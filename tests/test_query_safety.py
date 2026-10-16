@@ -70,7 +70,8 @@ def _every_valid_spec():
         dims = [[d] for d in m.dimensions] or [[]]
         for d in dims:
             group_by = list(dict.fromkeys([*m.required_dimensions[:1], *d]))[:2] if m.required_dimensions else d
-            filters = [{"field": f, "values": [FILTERS[f].values[0]]} for f in m.filters]
+            filters = [{"field": f, "op": "between", "values": [0, 400]} if FILTERS[f].kind == "number"
+                       else {"field": f, "op": FILTERS[f].ops[-1], "values": [FILTERS[f].values[0]]} for f in m.filters]
             yield dict(metric=m.id, group_by=group_by, filters=filters,
                        time_window={"preset": "fy2025" if m.date_column else "all"}, chart=m.charts[0])
 

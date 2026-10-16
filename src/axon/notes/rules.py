@@ -38,9 +38,17 @@ PATTERNS: dict[tuple[str, str], str] = {
     ("engagement", "aftercare_attending"): r"attending weekly aftercare|aftercare check-in",
     ("engagement", "aftercare_missed"): r"missed (?:last )?\d* ?aftercare",
     ("engagement", "alumni_involved"): r"alumni (?:dinner|nite|night)|volunteers at house",
-    ("engagement", "sober_living"): r"sober living",
     ("engagement", "doing_well"): r"doing well|good spirits",
     ("engagement", "no_recent_contact"): r"no contact since",
+    ("passes", "pass_taken"): r"(?:day|overnight|weekend) pass (?:approved|granted)|on (?:a )?(?:day|overnight|weekend) pass",
+    ("passes", "pass_returned"): r"back from (?:a |the )?(?:day |overnight |weekend )?pass|returned from (?:a |the )?(?:day |overnight |weekend )?pass",
+    ("passes", "pass_late_or_missed"): r"late (?:back |return(?:ing)? )?from (?:a |the )?(?:day |overnight |weekend )?pass|did not return from (?:a |the )?(?:day |overnight |weekend )?pass",
+    ("destination", "sober_living"): r"sober living",
+    ("destination", "home_or_family"): r"wanted to go home|living with family|moved (?:back )?home",
+    ("destination", "another_program"): r"program in home region|another program",
+    ("destination", "detox"): r"higher level of care|\(detox\)",
+    ("destination", "hospital"): r"transferred to hospital",
+    ("destination", "custody"): r"incarcerated|arrested|in custody",
 }
 COMPILED = {k: re.compile(v, re.IGNORECASE) for k, v in PATTERNS.items()}
 

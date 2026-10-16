@@ -1,20 +1,20 @@
 # Staff-note extraction: evaluation
 
-65 labelled notes (47 from the Harbourview file, 18 written in other words). Model `claude-opus-5-5`, mode `replay`.
+70 labelled notes (47 from the Harbourview file, 18 written in other words). Model `claude-opus-5-5`, mode `replay`.
 
 Model answers are not recorded yet; only the rules are scored.
 
 | System | Notes | Precision | Recall | F1 |
 |---|---|---|---|---|
 | rules | file | 100% | 100% | 100% |
-| rules | varied | 100% | 16% | 27% |
-| rules | all | 100% | 75% | 86% |
+| rules | varied | 89% | 28% | 42% |
+| rules | all | 98% | 73% | 84% |
 
 Recall by field, all notes:
 
-| System | referral | discharge | risk | engagement |
-|---|---|---|---|---|
-| rules | 72% | 81% | 50% | 79% |
+| System | referral | discharge | risk | engagement | passes | destination |
+|---|---|---|---|---|---|---|
+| rules | 72% | 81% | 50% | 73% | 75% | 78% |
 
 Quotes not found in the note (rejected by the validator): 0
 
@@ -31,7 +31,10 @@ Quotes not found in the note (rejected by the validator): 0
 - “Started part-time work at a grocery store.”: missed engagement:work; extra nothing
 - “Altercation in the kitchen, staff stepped in, no injuries.”: missed risk:incident; extra nothing
 - “Walked out Sunday morning without telling staff.”: missed discharge:self_discharge; extra nothing
-- “Sent to ER, admitted to the medical ward.”: missed discharge:transfer_hospital; extra nothing
-- “Picked up by police on an old warrant.”: missed discharge:incarceration; extra nothing
+- “Sent to ER, admitted to the medical ward.”: missed destination:hospital, discharge:transfer_hospital; extra nothing
+- “Picked up by police on an old warrant.”: missed destination:custody, discharge:incarceration; extra nothing
 - “Hasn't come to aftercare in a month, not returning calls.”: missed engagement:aftercare_missed, engagement:no_recent_contact; extra nothing
 - “Spoke at the alumni dinner, doing great.”: missed engagement:doing_well; extra nothing
+- “Res. back from weekend pass, appears well, attending NA 3x/wk”: missed engagement:doing_well; extra nothing
+- “Didn't come back from overnight pass; staff left a message.”: missed passes:pass_late_or_missed; extra passes:pass_returned
+- “Graduated, now living with family and working.”: missed engagement:work; extra nothing

@@ -14,6 +14,7 @@ from axon.config import AS_OF, WAREHOUSE_DIR, maturity_cutoff
 from axon.agent.llm import SpecModel
 from axon.ingest import read_residents
 from axon.model import build_model
+from axon.notes import exits
 from axon.notes.extract import run_notes
 from axon.quality import check
 from axon.tenants import TENANTS, Tenant
@@ -47,6 +48,7 @@ def build_tenant(tenant: Tenant, as_of: date = AS_OF, llm: SpecModel | None = No
     # Staff notes are read in their own step; only structured fields join the analytics tables.
     notes = run_notes(raw, llm if llm is not None else SpecModel())
     residents = model.residents.merge(notes.per_resident, on="resident_id", how="left")
+    residents = residents.merge(exits.derive(residents, notes.findings), on="resident_id", how="left")
     meta = {
         "tenant_id": tenant.id,
         "tenant_name": tenant.name,

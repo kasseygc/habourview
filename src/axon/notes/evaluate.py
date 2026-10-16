@@ -63,7 +63,8 @@ def run(mode: str = "replay", model: str | None = None) -> dict:
     except LLMUnavailable:
         model_pred, rejected = None, []
 
-    results: dict = {"model": llm.model, "mode": mode, "cases": len(cases), "systems": {}}
+    results: dict = {"model": llm.model, "mode": mode, "cases": len(cases),
+                     "file_cases": sum(c["set"] == "file" for c in cases), "systems": {}}
     systems = {"rules": rule_pred}
     if model_pred is not None:
         systems["model"] = model_pred
@@ -94,7 +95,7 @@ def _pct(x) -> str:
 
 def write_report(r: dict) -> Path:
     lines = ["# Staff-note extraction: evaluation", "",
-             f"{r['cases']} labelled notes (47 from the Harbourview file, 18 written in other words). "
+             f"{r['cases']} labelled notes ({r['file_cases']} from the Harbourview file, {r['cases'] - r['file_cases']} written in other words). "
              f"Model `{r['model']}`, mode `{r['mode']}`.", ""]
     if "model" not in r["systems"]:
         lines += ["Model answers are not recorded yet; only the rules are scored.", ""]
